@@ -18,6 +18,8 @@ struct TabNavigationView: View {
             NotificationView(day: $day).tabItem { Label("Notification", systemImage: "bell.fill") }
             
             AssignmentsView().tabItem { Label("Assignments", systemImage: "book.closed.fill") }
+            
+            SettingsView().tabItem { Label("Settings", systemImage: "gear") }
         }
     }
 }

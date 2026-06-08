@@ -12,11 +12,12 @@ struct NotificationView: View {
     @Binding var day: Int
     
     var body: some View {
-        VStack {
-            Title(text: dayToString[day] ?? "Notification")
-            GlassCard {
-                
-            }
+        VStack (spacing: 12) {
+            Title(text: dayToString[day]!)
+            GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
+            GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
+            GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
+            GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
         }
     }
 }
