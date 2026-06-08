@@ -66,6 +66,15 @@ struct DayView: View {
             
             tableCell("09:00 - 9:40").redacted(reason: .placeholder)
             tableCell("lesson", strokeColor: .indigo).redacted(reason: .placeholder)
+            
+            tableCell("09:00 - 9:40").redacted(reason: .placeholder)
+            tableCell("lesson", strokeColor: .cyan).redacted(reason: .placeholder)
+            
+            tableCell("09:00 - 9:40").redacted(reason: .placeholder)
+            tableCell("lesson", strokeColor: .purple).redacted(reason: .placeholder)
+            
+            tableCell("09:00 - 9:40").redacted(reason: .placeholder)
+            tableCell("lesson", strokeColor: .indigo).redacted(reason: .placeholder)
         }
     }
     
