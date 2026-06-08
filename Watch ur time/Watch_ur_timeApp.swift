@@ -11,7 +11,7 @@ import SwiftUI
 struct Watch_ur_timeApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabNavigationView()
         }
     }
 }

@@ -17,7 +17,7 @@ struct GlassCard<Content: View>: View {
         
             .glassEffect(
                 
-                in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+                in: RoundedRectangle(cornerRadius: 28, style: .continuous)
                 
             )
         

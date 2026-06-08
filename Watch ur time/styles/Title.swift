@@ -14,7 +14,10 @@ struct Title: View {
         Text(text)
             .font(.headline)
             .bold()
-            .frame(maxWidth: .infinity, alignment: .init(horizontal: .center, vertical: .leading))
+            .frame(
+                maxWidth: .infinity,
+                alignment: .top
+            )
             
     }
 }
