@@ -13,9 +13,9 @@ struct TimeTableView: View {
     var body: some View {
         VStack {
             Title(text: "Watch ur time")
-            
             GlassCard{
                 VStack {
+                    
                     Picker(selection: $day, label: Text("Select day")){
                         Text("Mon.").tag(1);
                         Text("Tue.").tag(2);
@@ -24,6 +24,7 @@ struct TimeTableView: View {
                         Text("Fri.").tag(5);
                     }.pickerStyle(SegmentedPickerStyle())
                         .padding(.bottom, 20)
+                        .sensoryFeedback(.selection, trigger: day)
                     
                     DayView(selectedDay: day)
                 }

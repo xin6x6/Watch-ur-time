@@ -50,7 +50,7 @@ struct SettingsView: View {
                 case .Light:
                     return .light
                 case .System:
-                    return .light
+                    return nil
                 }
             }()
         )

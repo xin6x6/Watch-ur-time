@@ -14,11 +14,15 @@ struct NotificationView: View {
     var body: some View {
         VStack (spacing: 12) {
             Title(text: dayToString[day]!)
+            
             GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
             GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
             GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
             GlassCardNotification(className: "Class", room: "Room", startTime: "Start", endTime: "End")
-        }
+        }.simultaneousGesture(TapGesture().onEnded{ _ in
+            UIImpactFeedbackGenerator(style: .heavy)
+                .impactOccurred()
+        })
     }
 }
 
