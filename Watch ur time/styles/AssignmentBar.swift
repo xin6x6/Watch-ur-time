@@ -20,7 +20,7 @@ struct AssignmentBar: View {
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 15)
+            RoundedRectangle(cornerRadius: 13)
                 .fill(color)
                 .shadow(color: (isFinished ? .clear : color ), radius: 5)
             
@@ -40,8 +40,8 @@ struct AssignmentBar: View {
             
             
         }
+        .padding(.leading, x)
 //        .position(x: x + width / 2, y: y + height / 2)
-        .offset(x: x)
     }
 }
 

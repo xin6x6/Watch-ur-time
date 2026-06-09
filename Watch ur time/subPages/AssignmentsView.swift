@@ -41,51 +41,85 @@ struct AssignmentsView: View {
 }
 
 struct BarAssignmentsView: View {
+    let days: [Date] = currentWeekDates()
+    
     var body: some View {
-        ZStack {
-            // Lines
-            HStack (spacing: 0) {
+        
+        VStack {
+            GeometryReader { geo in
+                let spacing = geo.size.width / 6
                 
-                // get View info
-                GeometryReader { geo in
-                    Path { path in
-                        let spacing = geo.size.width / 8
-                        
-                        for i in 0..<9 {
-                            let x = CGFloat(i) * spacing
-                            
-                            path.move(to: CGPoint(x: x, y: 0))
-                            path.addLine(to: CGPoint(x: x, y: geo.size.height))
-                        }
-                    }
-                    .stroke(.gray.opacity(0.4), lineWidth: 2)
+                ForEach(Array(days.enumerated()), id: \.offset) { index, date in
+                    Text(formatDate(date))
+                        .fontWidth(.compressed)
+                        .position(x: CGFloat(index) * spacing, y: 10)
                 }
-            }
+            }.frame(height: 20)
             
-            // subjects
-            VStack (spacing: 15) {
-                ForEach(0 ..< 2) { i in
+            ZStack (alignment: .topLeading) {
+                    // get View info
+                GeometryReader { geo in
+                    let spacing = geo.size.width / 6
                     
-                    //assignments per subject
-                    VStack (spacing: 3) {
-                        ForEach(0 ..< 3) { _ in
-                            AssignmentBar(
-                                subject: "Chinese",
-                                assignment: "aaa",
-                                color: .red,
-                                width: 100,
-                                height: 40,
-                                x: 0,
-                                isFinished: false
-                            )
+                        // Lines
+                    HStack (spacing: 0) {
+                        Path { path in
+                            
+                            for i in 0..<9 {
+                                let x = CGFloat(i) * spacing
+                                
+                                path.move(to: CGPoint(x: x, y: 0))
+                                path.addLine(to: CGPoint(x: x, y: geo.size.height))
+                            }
                         }
+                        .stroke(.gray.opacity(0.4), lineWidth: 2)
                     }
-                    
-                    Divider()
+                }
+                
+                    // subjects
+                VStack (alignment: .leading, spacing: 15) {
+                    ForEach(0 ..< 2) { i in
+                        
+                            //assignments per subject
+                        VStack (spacing: 3) {
+                            ForEach(0 ..< 3) { _ in
+                                AssignmentBar(
+                                    subject: "Chinese",
+                                    assignment: "aaa",
+                                    color: .red,
+                                    width: 130,
+                                    height: 40,
+                                    x: 0,
+                                    isFinished: false
+                                )
+                            }
+                        }
+                        
+                        Divider()
+                    }
                 }
             }
         }
+
     }
+}
+
+//
+func currentWeekDates() -> [Date] {
+    let calendar = Calendar.current
+    let today = Date()
+    
+    let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: today)!.start
+    
+    return (0..<7).compactMap { day in
+        calendar.date(byAdding: .day, value: day, to: startOfWeek)
+    }
+}
+
+func formatDate(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "M.d"
+    return formatter.string(from: date)
 }
 
 #Preview {
