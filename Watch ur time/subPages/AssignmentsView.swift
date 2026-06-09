@@ -56,10 +56,14 @@ struct BarAssignmentsView: View {
                 }
             }.frame(height: 20)
             
-            ZStack (alignment: .topLeading) {
-                    // get View info
-                GeometryReader { geo in
+            
+            
+            
+            // get View info
+            GeometryReader { geo in
+                ZStack (alignment: .topLeading) {
                     let spacing = geo.size.width / 6
+                    
                     
                         // Lines
                     HStack (spacing: 0) {
@@ -74,28 +78,29 @@ struct BarAssignmentsView: View {
                         }
                         .stroke(.gray.opacity(0.4), lineWidth: 2)
                     }
-                }
-                
-                    // subjects
-                VStack (alignment: .leading, spacing: 15) {
-                    ForEach(0 ..< 2) { i in
                         
-                            //assignments per subject
-                        VStack (spacing: 3) {
-                            ForEach(0 ..< 3) { _ in
-                                AssignmentBar(
-                                    subject: "Chinese",
-                                    assignment: "aaa",
-                                    color: .red,
-                                    width: 130,
-                                    height: 40,
-                                    x: 0,
-                                    isFinished: false
-                                )
+
+                        // subjects
+                    VStack (alignment: .leading, spacing: 15) {
+                        ForEach(0 ..< 2) { i in
+                            
+                                //assignments per subject
+                            VStack (alignment: .leading, spacing: 3) {
+                                ForEach(3 ..< 6) { j in
+                                    AssignmentBar(
+                                        subject: "Chinese",
+                                        assignment: "aaa",
+                                        color: .orange,
+                                        width: dayToPosition(day: Int.random(in: 3..<7) , unit: spacing),
+                                        height: 50,
+                                        x: 0,
+                                        isFinished: false
+                                    )
+                                }
                             }
+                            
+                            Divider()
                         }
-                        
-                        Divider()
                     }
                 }
             }

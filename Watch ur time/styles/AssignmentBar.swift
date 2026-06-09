@@ -37,17 +37,24 @@ struct AssignmentBar: View {
                 }
                 .frame(width: width, height: height)
                 
-            
-            
+            HStack{
+                Text(subject + ":").bold(true)
+                Text(assignment)
+            }
         }
+        .frame(width: width)
         .padding(.leading, x)
 //        .position(x: x + width / 2, y: y + height / 2)
     }
 }
 
+func dayToPosition (day: Int, unit: CGFloat) -> CGFloat {
+    return unit * CGFloat(day - 1)
+}
+
 #Preview {
     VStack(spacing: 3) {
-        AssignmentBar(subject: "Chinese", assignment: "aaa",color: .blue, width: 300, height: 40, x: 0)
+        AssignmentBar(subject: "Chinese", assignment: "窘乏 死扽就烦扽江帆但凡扽扽江帆扽就翻翻就进进进进进进进",color: .blue, width: 300, height: 40, x: 0)
         AssignmentBar(
             subject: "Chinese",
             assignment: "aaa",
