@@ -25,6 +25,7 @@ struct TimeTableView: View {
                     }.pickerStyle(SegmentedPickerStyle())
                         .padding(.bottom, 20)
                         .sensoryFeedback(.selection, trigger: day)
+                        .shadow(radius: 10)
                     
                     DayView(selectedDay: day)
                 }
@@ -84,6 +85,7 @@ struct DayView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 25)
                 .stroke(strokeColor.opacity(0.4), lineWidth: 2)
+                .shadow(radius: 10)
             Text(text)
                 .font(isHeader ? .headline : .body)
                 .frame(maxWidth: .infinity, minHeight: 50)
