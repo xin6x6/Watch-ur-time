@@ -20,8 +20,12 @@ struct GlassCardNotification: View {
                     .multilineTextAlignment(.center)
                     .font(.system(size: 19))
                     .bold(true)
+                    .foregroundColor(.black)
                 
-                Text("\(startTime) - \(endTime)").font(.system(size: 19)).bold(true)
+                Text("\(startTime) - \(endTime)")
+                    .font(.system(size: 19))
+                    .bold(true)
+                    .foregroundColor(.black)
             }.padding(10)
         }
     }
@@ -30,3 +34,4 @@ struct GlassCardNotification: View {
 #Preview {
     GlassCardNotification(className: "class", room: "room", startTime: "start", endTime: "end")
 }
+
