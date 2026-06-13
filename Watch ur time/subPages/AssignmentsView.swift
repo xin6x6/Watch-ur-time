@@ -90,7 +90,7 @@ struct BarAssignmentsView: View {
                                     AssignmentBar(
                                         subject: "Chinese",
                                         assignment: "aaa",
-                                        color: .orange,
+                                        color: .green,
                                         width: dayToPosition(day: Int.random(in: 3..<7) , unit: spacing),
                                         height: 50,
                                         x: 0,
