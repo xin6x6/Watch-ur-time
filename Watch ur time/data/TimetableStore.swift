@@ -127,12 +127,72 @@ struct TimetableNotificationSetting: Codable, Identifiable, Hashable {
 
     init(
         placementID: UUID,
-        moment: NotificationMoment = .classBegins,
-        minutesBefore: Int = 5
+        moment: NotificationMoment = .classEnds,
+        minutesBefore: Int = 2
     ) {
         self.placementID = placementID
         self.moment = moment
         self.minutesBefore = minutesBefore
+    }
+}
+
+struct TimetableAssignment: Codable, Identifiable, Hashable {
+    var id: UUID
+    var subject: String
+    var content: String
+    var startDate: Date
+    var dueDate: Date
+    var createdAt: Date
+    var isFinished: Bool
+
+    init(
+        id: UUID = UUID(),
+        subject: String,
+        content: String,
+        startDate: Date,
+        dueDate: Date,
+        createdAt: Date = .now,
+        isFinished: Bool = false
+    ) {
+        self.id = id
+        self.subject = subject
+        self.content = content
+        self.startDate = startDate
+        self.dueDate = dueDate
+        self.createdAt = createdAt
+        self.isFinished = isFinished
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case subject
+        case content
+        case startDate
+        case dueDate
+        case createdAt
+        case isFinished
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        subject = try container.decode(String.self, forKey: .subject)
+        content = try container.decode(String.self, forKey: .content)
+        startDate = try container.decode(Date.self, forKey: .startDate)
+        dueDate = try container.decode(Date.self, forKey: .dueDate)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? dueDate
+        isFinished = try container.decodeIfPresent(Bool.self, forKey: .isFinished) ?? false
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(subject, forKey: .subject)
+        try container.encode(content, forKey: .content)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(dueDate, forKey: .dueDate)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(isFinished, forKey: .isFinished)
     }
 }
 
@@ -147,24 +207,27 @@ struct TimetableDayEntry: Identifiable, Hashable {
 
 @Model
 final class TimetableStore {
-    var updatedAt: Date
-    private var subjectsPayload: Data
-    private var slotsPayload: Data
-    private var placementsPayload: Data
-    private var notificationSettingsPayload: Data
+    var updatedAt: Date = Date()
+    private var subjectsPayload: Data = Data()
+    private var slotsPayload: Data = Data()
+    private var placementsPayload: Data = Data()
+    private var notificationSettingsPayload: Data = Data()
+    private var assignmentsPayload: Data = Data()
 
     init(
         updatedAt: Date = .now,
         subjects: [TimetableSubject] = [],
         slots: [TimetableTimeSlot] = [],
         placements: [TimetablePlacement] = [],
-        notificationSettings: [TimetableNotificationSetting] = []
+        notificationSettings: [TimetableNotificationSetting] = [],
+        assignments: [TimetableAssignment] = []
     ) {
         self.updatedAt = updatedAt
         self.subjectsPayload = Self.encode(subjects)
         self.slotsPayload = Self.encode(slots)
         self.placementsPayload = Self.encode(placements)
         self.notificationSettingsPayload = Self.encode(notificationSettings)
+        self.assignmentsPayload = Self.encode(assignments)
     }
 
     var subjects: [TimetableSubject] {
@@ -195,6 +258,14 @@ final class TimetableStore {
         get { Self.decode(notificationSettingsPayload, defaultValue: []) }
         set {
             notificationSettingsPayload = Self.encode(newValue)
+            updatedAt = .now
+        }
+    }
+
+    var assignments: [TimetableAssignment] {
+        get { Self.decode(assignmentsPayload, defaultValue: []) }
+        set {
+            assignmentsPayload = Self.encode(newValue)
             updatedAt = .now
         }
     }
@@ -242,6 +313,38 @@ final class TimetableStore {
         notificationSettings = currentSettings
     }
 
+    func assignment(with assignmentID: UUID) -> TimetableAssignment? {
+        assignments.first(where: { $0.id == assignmentID })
+    }
+
+    func upsertAssignment(_ assignment: TimetableAssignment) {
+        var currentAssignments = assignments
+
+        if let index = currentAssignments.firstIndex(where: { $0.id == assignment.id }) {
+            currentAssignments[index] = assignment
+        } else {
+            currentAssignments.append(assignment)
+        }
+
+        assignments = currentAssignments
+    }
+
+    func removeAssignment(_ assignmentID: UUID) {
+        assignments = assignments.filter { $0.id != assignmentID }
+    }
+
+    func subjectColor(for subject: String) -> Color {
+        if let timetableSubject = subjects.first(where: {
+            $0.name.localizedCaseInsensitiveCompare(subject) == .orderedSame
+        }) {
+            return timetableSubject.color
+        }
+
+        let palette: [Color] = [.blue, .green, .orange, .pink, .indigo, .teal]
+        let hashValue = abs(subject.lowercased().hashValue)
+        return palette[hashValue % palette.count]
+    }
+
     func entries(for dayIndex: Int) -> [TimetableDayEntry] {
         placements
             .filter { $0.dayIndex == dayIndex }
@@ -272,5 +375,52 @@ final class TimetableStore {
 
     private static func decode<T: Decodable>(_ data: Data, defaultValue: T) -> T {
         (try? JSONDecoder().decode(T.self, from: data)) ?? defaultValue
+    }
+}
+
+struct TimetableArchive: Codable {
+    var schemaVersion: Int
+    var exportedAt: Date
+    var store: TimetableStoreSnapshot
+
+    init(
+        schemaVersion: Int = 1,
+        exportedAt: Date = .now,
+        store: TimetableStoreSnapshot
+    ) {
+        self.schemaVersion = schemaVersion
+        self.exportedAt = exportedAt
+        self.store = store
+    }
+}
+
+struct TimetableStoreSnapshot: Codable {
+    var updatedAt: Date
+    var subjects: [TimetableSubject]
+    var slots: [TimetableTimeSlot]
+    var placements: [TimetablePlacement]
+    var notificationSettings: [TimetableNotificationSetting]
+    var assignments: [TimetableAssignment]
+}
+
+extension TimetableStore {
+    var snapshot: TimetableStoreSnapshot {
+        TimetableStoreSnapshot(
+            updatedAt: updatedAt,
+            subjects: subjects,
+            slots: slots,
+            placements: placements,
+            notificationSettings: notificationSettings,
+            assignments: assignments
+        )
+    }
+
+    func apply(snapshot: TimetableStoreSnapshot) {
+        subjectsPayload = Self.encode(snapshot.subjects)
+        slotsPayload = Self.encode(snapshot.slots)
+        placementsPayload = Self.encode(snapshot.placements)
+        notificationSettingsPayload = Self.encode(snapshot.notificationSettings)
+        assignmentsPayload = Self.encode(snapshot.assignments)
+        updatedAt = snapshot.updatedAt
     }
 }

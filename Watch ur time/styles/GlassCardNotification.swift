@@ -12,26 +12,45 @@ struct GlassCardNotification: View {
     var room: String
     var startTime: String
     var endTime: String
+    var notificationTime: String
     
     var body: some View {
         GlassCard {
-            HStack(spacing: 100) {
-                Text("\(className)\n\(room)")
-                    .multilineTextAlignment(.center)
-                    .font(.system(size: 19))
-                    .bold(true)
-//                    .foregroundColor(.black)
-                
-                Text("\(startTime) - \(endTime)")
-                    .font(.system(size: 19))
-                    .bold(true)
-//                    .foregroundColor(.black)
-            }.padding(10)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(className)
+                            .font(.system(size: 20, weight: .bold))
+                        Text(room)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Text("\(startTime) - \(endTime)")
+                        .font(.system(size: 16, weight: .bold))
+                }
+
+                HStack(spacing: 6) {
+                    Image(systemName: "bell.badge")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text(notificationTime)
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundStyle(.secondary)
+            }
+            .padding(10)
         }
     }
 }
 
 #Preview {
-    GlassCardNotification(className: "class", room: "room", startTime: "start", endTime: "end")
+    GlassCardNotification(
+        className: "class",
+        room: "room",
+        startTime: "start",
+        endTime: "end",
+        notificationTime: "07:58"
+    )
 }
-

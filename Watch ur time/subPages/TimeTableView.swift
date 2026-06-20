@@ -11,10 +11,11 @@ import SwiftUI
 struct TimeTableView: View {
     @Binding var day: Int
     @State private var isAddingTimetable = false
+    @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 Title(text: "Watch ur time")
                 GlassCard {
                     VStack {
@@ -31,32 +32,40 @@ struct TimeTableView: View {
                         .shadow(radius: 10)
 
                         DayView(selectedDay: day)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
+                    .frame(maxHeight: .infinity, alignment: .top)
                 }
+                .frame(maxHeight: .infinity, alignment: .top)
             }
-            .safeAreaInset(edge: .top) {
-                HStack {
-                    Spacer()
-
+            .frame(maxHeight: .infinity, alignment: .top)
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 12)
+            }
+            .padding()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
                             isAddingTimetable = true
                         } label: {
-                            Label("Add Timetable", systemImage: "calendar")
+                            Label(menuActionTitle, systemImage: "calendar")
                         }
                     } label: {
-                        GlassButton(img: "plus") { }
+                        Image(systemName: "plus")
+                            .font(.title3.weight(.semibold))
                     }
                 }
-                .padding(.horizontal, 10)
-                .padding(.bottom, 8)
             }
-            .padding()
             .navigationDestination(isPresented: $isAddingTimetable) {
                 AddTimeTable()
             }
         }
         .tint(.primary)
+    }
+
+    private var menuActionTitle: String {
+        stores.first?.hasTimetable == true ? "Edit Timetable" : "Add Timetable"
     }
 }
 
@@ -67,29 +76,26 @@ struct DayView: View {
 
     var body: some View {
         if let store = stores.first, !store.slots.isEmpty {
-            LazyVGrid(
-                columns: [
-                    GridItem(.fixed(140)),
-                    GridItem(.flexible())
-                ],
-                spacing: 4
-            ) {
-                tableCell("Time", isHeader: true)
-                tableCell("Lesson", isHeader: true)
+            ScrollView {
+                VStack(spacing: 4) {
+                    headerRow
 
-                ForEach(Array(store.slots.enumerated()), id: \.element.id) { index, slot in
-                    let subject = store.subjectID(dayIndex: selectedDay, slotIndex: index)
-                        .flatMap { store.subject(for: $0) }
+                    ForEach(Array(store.slots.enumerated()), id: \.element.id) { index, slot in
+                        let subject = store.subjectID(dayIndex: selectedDay, slotIndex: index)
+                            .flatMap { store.subject(for: $0) }
 
-                    tableCell(slot.displayLabel)
-                    tableCell(
-                        subject?.name ?? "Free",
-                        subtitle: subject?.room,
-                        strokeColor: subject?.color ?? .gray,
-                        fillColor: subject?.color.opacity(0.24) ?? .clear
-                    )
+                        lessonRow(
+                            timeText: slot.displayLabel,
+                            lessonText: subject?.name ?? "Free",
+                            lessonSubtitle: subject?.room,
+                            strokeColor: subject?.color ?? .gray,
+                            fillColor: subject?.color.opacity(0.24) ?? .clear
+                        )
+                    }
                 }
             }
+            .scrollIndicators(.hidden)
+            .frame(maxHeight: .infinity, alignment: .top)
         } else {
             VStack(spacing: 12) {
                 Image(systemName: "calendar.badge.exclamationmark")
@@ -104,6 +110,44 @@ struct DayView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 36)
+        }
+    }
+
+    private var headerRow: some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.fixed(140)),
+                GridItem(.flexible())
+            ],
+            spacing: 4
+        ) {
+            tableCell("Time", isHeader: true)
+            tableCell("Lesson", isHeader: true)
+        }
+        .padding(.bottom, 2)
+    }
+
+    private func lessonRow(
+        timeText: String,
+        lessonText: String,
+        lessonSubtitle: String?,
+        strokeColor: Color,
+        fillColor: Color
+    ) -> some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.fixed(140)),
+                GridItem(.flexible())
+            ],
+            spacing: 4
+        ) {
+            tableCell(timeText)
+            tableCell(
+                lessonText,
+                subtitle: lessonSubtitle,
+                strokeColor: strokeColor,
+                fillColor: fillColor
+            )
         }
     }
 
@@ -255,7 +299,7 @@ struct AddTimeTable: View {
 
     private var scheduleEntrySection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Add each class period first, then fill every day by choosing one of the subjects you created.")
+            Text("Add each class period first, then fill the classes you actually have. Empty cells stay free.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -379,7 +423,6 @@ struct AddTimeTable: View {
     }
 
     private var canSaveTimetable: Bool {
-        let validSubjectIDs = Set(completedSubjects.map(\.id))
         let filledSlots = completedTimeSlots
 
         guard !filledSlots.isEmpty else {
@@ -390,12 +433,10 @@ struct AddTimeTable: View {
             return false
         }
 
-        return filledSlots.allSatisfy { slot in
-            weekdayColumns.allSatisfy { column in
-                guard let subjectID = selectedSubjectsBySlot[slot.id]?[column.id] else {
-                    return false
-                }
-                return validSubjectIDs.contains(subjectID)
+        return filledSlots.contains { slot in
+            let selections = selectedSubjectsBySlot[slot.id] ?? [:]
+            return selections.values.contains { subjectID in
+                completedSubjects.contains(where: { $0.id == subjectID })
             }
         }
     }
@@ -539,19 +580,43 @@ struct AddTimeTable: View {
             TimetableTimeSlot(id: $0.id, startTime: $0.startTime.trimmed, endTime: $0.endTime.trimmed)
         }
 
-        let placements: [TimetablePlacement] = slots.enumerated().flatMap { index, slot in
-            weekdayColumns.compactMap { column in
-                guard let subjectID = selectedSubjectsBySlot[slot.id]?[column.id] else {
-                    return nil
-                }
-
-                return TimetablePlacement(dayIndex: column.id, slotIndex: index, subjectID: subjectID)
-            }
-        }
-
         do {
             let store = activeStore()
-            store.replaceAll(subjects: subjects, slots: slots, placements: placements)
+            let existingPlacements = Dictionary(
+                uniqueKeysWithValues: store.placements.map {
+                    (PlacementCoordinate(dayIndex: $0.dayIndex, slotIndex: $0.slotIndex), $0)
+                }
+            )
+
+            let placements: [TimetablePlacement] = slots.enumerated().flatMap { index, slot in
+                weekdayColumns.compactMap { column in
+                    guard let subjectID = selectedSubjectsBySlot[slot.id]?[column.id] else {
+                        return nil
+                    }
+
+                    let coordinate = PlacementCoordinate(dayIndex: column.id, slotIndex: index)
+                    let existingPlacement = existingPlacements[coordinate]
+
+                    return TimetablePlacement(
+                        id: existingPlacement?.id ?? UUID(),
+                        dayIndex: column.id,
+                        slotIndex: index,
+                        subjectID: subjectID
+                    )
+                }
+            }
+
+            let validPlacementIDs = Set(placements.map(\.id))
+            let notificationSettings = store.notificationSettings.filter {
+                validPlacementIDs.contains($0.placementID)
+            }
+
+            store.replaceAll(
+                subjects: subjects,
+                slots: slots,
+                placements: placements,
+                notificationSettings: notificationSettings
+            )
             try modelContext.save()
             dismiss()
         } catch {
@@ -571,6 +636,11 @@ struct AddTimeTable: View {
         modelContext.insert(store)
         return store
     }
+}
+
+private struct PlacementCoordinate: Hashable {
+    let dayIndex: Int
+    let slotIndex: Int
 }
 
 private enum AddTimeTableStep {
