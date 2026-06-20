@@ -1,0 +1,23 @@
+//
+//  class.swift
+//  Watch ur time
+//
+//  Created by Ng1nx on 6/14/26.
+//
+
+import Foundation
+import SwiftData
+import SwiftUI
+
+@Model
+class Class {
+    var name: String
+    var room: String
+    var color: CGColor
+    
+    init(name: String, room: String, color: CGColor) {
+        self.name = name
+        self.room = room
+        self.color = color
+    }
+}

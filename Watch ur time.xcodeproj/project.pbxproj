@@ -29,9 +29,33 @@
 		851270122FD6DBF700CC128F /* Watch ur timeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Watch ur timeUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		85D0A1502FDED66900D67E48 /* Exceptions for "Watch ur time" folder in "Watch ur time" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				data/class.swift.dis,
+			);
+			target = 85126FFA2FD6DBF600CC128F /* Watch ur time */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		85D0A1512FDED66900D67E48 /* Exceptions for "Watch ur time" folder in "Compile Sources" phase from "Watch ur time" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 85126FF72FD6DBF600CC128F /* Sources */;
+			membershipExceptions = (
+				data/class.swift.dis,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		85126FFD2FD6DBF600CC128F /* Watch ur time */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				85D0A1502FDED66900D67E48 /* Exceptions for "Watch ur time" folder in "Watch ur time" target */,
+				85D0A1512FDED66900D67E48 /* Exceptions for "Watch ur time" folder in "Compile Sources" phase from "Watch ur time" target */,
+			);
 			path = "Watch ur time";
 			sourceTree = "<group>";
 		};

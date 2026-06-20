@@ -1,9 +1,9 @@
-//
-//  NotificationView.swift
-//  Watch ur time
-//
-//  Created by Ng1nx on 6/8/26.
-//
+    //
+    //  NotificationView.swift
+    //  Watch ur time
+    //
+    //  Created by Ng1nx on 6/8/26.
+    //
 import SwiftUI
 
 var dayToString = [1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday"]
@@ -32,7 +32,7 @@ struct NotificationView: View {
                 UIImpactFeedbackGenerator(style: .heavy)
                     .impactOccurred()
             })
-        }
+        }.tint(.primary)
     }
 }
 
@@ -41,27 +41,20 @@ struct AdjustNotificationView: View {
     @State var day: Int
     
     @State private var atSelection = 0
-    @State private var advanceTime = 2
+    @State private var advanceTime = 5
     let atOptions = ["Class begins", "Class ends", "Both"]
+    let advanceOptions = Array(0...60)
     
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
-            // Header
+                // Header
             HStack {
                 Text("Adjust notification")
                     .font(.title2.bold())
-//                Spacer()
-//                Button(action: { /* Save action */ }) {
-//                    Image(systemName: "checkmark")
-//                        .font(.title2.bold())
-//                        .foregroundColor(.black)
-//                        .padding(10)
-//                        .background(.thinMaterial, in: Circle())
-//                }
             }
             .padding(.bottom, 8)
-
-            // Section: At
+            
+                // Section: At
             VStack(alignment: .leading, spacing: 12) {
                 Text("At")
                     .font(.headline)
@@ -75,23 +68,22 @@ struct AdjustNotificationView: View {
             
             /**
              Picker("Name", selection: $selections){
-                tags...
+             tags...
              }
              */
-
-            // Section: In advance for
+            
+                // Section: In advance for
             VStack(alignment: .leading, spacing: 12) {
                 Text("In advance for")
                     .font(.headline)
-                HStack {
-                    Spacer()
-                    Text("\(advanceTime) mins")
-                        .font(.body)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 16)
-                        .background(RoundedRectangle(cornerRadius: 14).fill(Color(.systemGray6)))
-                    Spacer()
+                Picker("In advance for", selection: $advanceTime) {
+                    ForEach(advanceOptions, id: \.self) { minute in
+                        Text(minute == 0 ? "On time" : "\(minute) mins")
+                            .tag(minute)
+                    }
                 }
+                .pickerStyle(.wheel)
+                .frame(height: 120)
             }
             Spacer()
         }

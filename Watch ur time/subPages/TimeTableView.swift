@@ -1,9 +1,9 @@
-//
-//  ContentView.swift
-//  Watch ur time
-//
-//  Created by Ng1nx on 6/8/26.
-//
+    //
+    //  ContentView.swift
+    //  Watch ur time
+    //
+    //  Created by Ng1nx on 6/8/26.
+    //
 
 import SwiftUI
 
@@ -11,6 +11,7 @@ struct TimeTableView: View {
     @Binding var day: Int
     
     var body: some View {
+        
         VStack {
             Title(text: "Watch ur time")
             GlassCard{
@@ -31,13 +32,43 @@ struct TimeTableView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .top) {
+            HStack {
+                Spacer()
+                
+                Menu {
+                    Button {
+                            // Add lesson action here
+                    } label: {
+                        Label("Add Lesson", systemImage: "book")
+                    }
+                    
+                    Button {
+                            // Add assignment action here
+                    } label: {
+                        Label("Add Assignment", systemImage: "checklist")
+                    }
+                    
+                    Button {
+                            // Add reminder action here
+                    } label: {
+                        Label("Add Reminder", systemImage: "bell")
+                    }
+                } label: {
+                    GlassButton(img: "plus"){}
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
+        }
         .padding()
+        
     }
 }
 
 struct DayView: View {
     var selectedDay: Int
-
+    
     
     var body: some View {
         LazyVGrid(
@@ -90,7 +121,7 @@ struct DayView: View {
                 .font(isHeader ? .headline : .body)
                 .frame(maxWidth: .infinity, minHeight: 50)
         }
-
+        
     }
 }
 
