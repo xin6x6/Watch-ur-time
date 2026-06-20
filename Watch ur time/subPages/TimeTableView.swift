@@ -9,66 +9,60 @@ import SwiftUI
 
 struct TimeTableView: View {
     @Binding var day: Int
+    @State private var isAddingTimetable = false
     
     var body: some View {
-        
-        VStack {
-            Title(text: "Watch ur time")
-            GlassCard{
-                VStack {
-                    
-                    Picker(selection: $day, label: Text("Select day")){
-                        Text("Mon.").tag(1);
-                        Text("Tue.").tag(2);
-                        Text("Wed.").tag(3);
-                        Text("Thu.").tag(4);
-                        Text("Fri.").tag(5);
-                    }.pickerStyle(SegmentedPickerStyle())
-                        .padding(.bottom, 20)
-                        .sensoryFeedback(.selection, trigger: day)
-                        .shadow(radius: 10)
-                    
-                    DayView(selectedDay: day)
+        NavigationStack {
+            VStack {
+                Title(text: "Watch ur time")
+                GlassCard{
+                    VStack {
+
+                        Picker(selection: $day, label: Text("Select day")){
+                            Text("Mon.").tag(1);
+                            Text("Tue.").tag(2);
+                            Text("Wed.").tag(3);
+                            Text("Thu.").tag(4);
+                            Text("Fri.").tag(5);
+                        }.pickerStyle(SegmentedPickerStyle())
+                            .padding(.bottom, 20)
+                            .sensoryFeedback(.selection, trigger: day)
+                            .shadow(radius: 10)
+
+                        DayView(selectedDay: day)
+                    }
                 }
             }
-        }
-        .safeAreaInset(edge: .top) {
-            HStack {
-                Spacer()
-                
-                Menu {
-                    Button {
-                            // Add lesson action here
+            .safeAreaInset(edge: .top) {
+                HStack {
+                    Spacer()
+
+                    Menu {
+                        Button {
+                            isAddingTimetable = true
+                        } label: {
+                            Label("Add Timetable", systemImage: "calendar")
+                        }
+
                     } label: {
-                        Label("Add Lesson", systemImage: "book")
+                        GlassButton(img: "plus"){}
                     }
-                    
-                    Button {
-                            // Add assignment action here
-                    } label: {
-                        Label("Add Assignment", systemImage: "checklist")
-                    }
-                    
-                    Button {
-                            // Add reminder action here
-                    } label: {
-                        Label("Add Reminder", systemImage: "bell")
-                    }
-                } label: {
-                    GlassButton(img: "plus"){}
                 }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 10)
-            .padding(.bottom, 8)
+            .padding()
+            .navigationDestination(isPresented: $isAddingTimetable) {
+                AddTimeTable()
+            }
         }
-        .padding()
-        
+        .tint(.primary)
     }
 }
 
 struct DayView: View {
     var selectedDay: Int
-    
+
     
     var body: some View {
         LazyVGrid(
@@ -122,6 +116,24 @@ struct DayView: View {
                 .frame(maxWidth: .infinity, minHeight: 50)
         }
         
+    }
+}
+
+struct AddTimeTable: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Text("Hello, world!")
+            .navigationBarBackButtonHidden()
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("Back", systemImage: "chevron.left")
+                    }
+                }
+            }
     }
 }
 
