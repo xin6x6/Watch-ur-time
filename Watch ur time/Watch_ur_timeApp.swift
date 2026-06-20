@@ -5,6 +5,7 @@
 //  Created by Ng1nx on 6/8/26.
 //
 
+import SwiftData
 import SwiftUI
 
 @main
@@ -13,5 +14,6 @@ struct Watch_ur_timeApp: App {
         WindowGroup {
             TabNavigationView()
         }
+        .modelContainer(for: [TimetableStore.self])
     }
 }
