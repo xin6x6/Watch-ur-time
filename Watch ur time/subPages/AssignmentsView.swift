@@ -15,32 +15,41 @@ struct AssignmentsView: View {
     @State private var selectedWeekStart = startOfWeek(for: Date())
     @State private var isAddingAssignment = false
     @State private var timelineScrollRequestID = UUID()
-    @State private var isBottomSheetPresented = true
-    @State private var selectedSheetDetent: PresentationDetent = .height(100)
-    @State private var isSheetExpanded = false
+    @State private var sheetProgress: CGFloat = 0
+    @GestureState private var sheetDragTranslation: CGFloat = 0
 
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
-    private let compactSheetHeight: CGFloat = 100
-
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                GlassCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        controlsRow
-                        weekSummary
-                        BarAssignmentsView(
-                            assignments: weekAssignments,
-                            visibleWeekStart: $selectedWeekStart,
-                            scrollRequestID: timelineScrollRequestID,
-                            subjectColor: assignmentColor(for:)
-                        )
+            GeometryReader { geo in
+                let collapsedSheetHeight: CGFloat = 80
+                let expandedSheetHeight = min(geo.size.height * 0.74, geo.size.height - 20)
+
+                VStack(spacing: 0) {
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            controlsRow
+                            weekSummary
+                            BarAssignmentsView(
+                                assignments: weekAssignments,
+                                visibleWeekStart: $selectedWeekStart,
+                                scrollRequestID: timelineScrollRequestID,
+                                subjectColor: assignmentColor(for:)
+                            )
+                        }
                     }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    bottomSheetContent(
+                        collapsedHeight: collapsedSheetHeight,
+                        expandedHeight: expandedSheetHeight
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 4)
+                }
             }
-            .toolbar(.hidden, for: .tabBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     GlassButton(img: "plus") {
@@ -51,46 +60,12 @@ struct AssignmentsView: View {
             .navigationDestination(isPresented: $isAddingAssignment) {
                 AddAssignmentsView()
             }
-            .sheet(isPresented: $isBottomSheetPresented) {
-                bottomSheetContent
-                    .presentationDetents([compactSheetDetent, .fraction(0.78)], selection: $selectedSheetDetent)
-                    .presentationBackground(.clear)
-                    .presentationBackgroundInteraction(.enabled)
-                    .presentationCornerRadius(52)
-                    .presentationDragIndicator(.hidden)
-                    .interactiveDismissDisabled()
-                    .onAppear {
-                        selectedSheetDetent = compactSheetDetent
-                        isSheetExpanded = false
-                    }
-                    .onChange(of: selectedSheetDetent) { _, newValue in
-                        isSheetExpanded = newValue != compactSheetDetent
-                    }
-            }
-            .onAppear {
-                if tabSelection == .assignments, !isBottomSheetPresented {
-                    isBottomSheetPresented = true
-                }
-            }
-            .onChange(of: tabSelection) { _, newValue in
-                if newValue == .assignments {
-                    isBottomSheetPresented = true
-                    selectedSheetDetent = compactSheetDetent
-                    isSheetExpanded = false
-                } else {
-                    isBottomSheetPresented = false
-                }
-            }
         }
         .tint(.primary)
     }
 
     private var store: TimetableStore? {
         stores.first
-    }
-
-    private var compactSheetDetent: PresentationDetent {
-        .height(compactSheetHeight)
     }
 
     private var allAssignments: [TimetableAssignment] {
@@ -195,50 +170,15 @@ struct AssignmentsView: View {
         return "\(formatDate(firstDay)) - \(formatDate(lastDay))"
     }
 
-    @ViewBuilder
-    private var bottomSheetContent: some View {
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 18) {
-                sheetBody
-            }
-        } else {
-            sheetBody
-        }
-    }
+    private func bottomSheetContent(
+        collapsedHeight: CGFloat,
+        expandedHeight: CGFloat
+    ) -> some View {
+        let progress = sheetProgressValue(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)
 
-    private var sheetBody: some View {
-        GeometryReader { proxy in
-            let bottomInset = proxy.safeAreaInsets.bottom
-
-            ZStack {
-                if isSheetExpanded {
-                    expandedSheetBackground
-                        .transition(.opacity)
-                }
-
-                VStack(spacing: 0) {
-                    if isSheetExpanded {
-                        sheetGrabber
-                        expandedSheetContent(bottomInset: bottomInset)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    } else {
-                        collapsedSheetBar(bottomInset: bottomInset)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        }
-        .padding(.top, 8)
-        .animation(.spring(response: 0.34, dampingFraction: 0.88), value: isSheetExpanded)
-    }
-
-    private func expandedSheetContent(bottomInset: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            expandedSheetHeader
-                .padding(.horizontal, 8)
-                .padding(.top, 12)
-                .padding(.bottom, 14)
+        return VStack(spacing: 0) {
+            sheetHeader
+                .gesture(sheetDragGesture(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight))
 
             Group {
                 if filteredAssignments.isEmpty {
@@ -247,126 +187,34 @@ struct AssignmentsView: View {
                     assignmentsList
                 }
             }
-            .padding(.horizontal, 6)
-            .padding(.bottom, bottomInset + 12)
             .frame(maxHeight: .infinity, alignment: .top)
-            .zIndex(0)
-        }
-    }
-
-    private var expandedSheetBackground: some View {
-        Rectangle()
-            .fill(.ultraThinMaterial)
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .frame(height: 120)
-                    .mask {
-                        LinearGradient(
-                            colors: [.white.opacity(0.95), .white.opacity(0.55), .clear],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-            }
-            .ignoresSafeArea()
-    }
-
-    private var sheetGrabber: some View {
-        Capsule()
-            .fill(.white.opacity(0.5))
-            .frame(width: 70, height: 7)
-            .padding(.top, 7)
-            .padding(.bottom, 2)
-    }
-
-    private func collapsedSheetBar(bottomInset: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            sheetGrabber
-
-            sheetTabMenu(bottomInset: bottomInset)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 12)
-        .padding(.bottom, 2)
-        .background {
-            let shape = RoundedRectangle(cornerRadius: 48, style: .continuous)
-
-            shape
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    shape
-                        .fill(.black.opacity(0.6))
-                }
-                .overlay {
-                    shape
-                        .stroke(.white.opacity(0.08), lineWidth: 1)
-                }
-                .shadow(color: .black.opacity(0.18), radius: 18, y: 10)
+        .frame(height: collapsedHeight + (expandedHeight - collapsedHeight) * progress, alignment: .top)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
         }
+        .shadow(color: .black.opacity(0.14), radius: 16, y: -2)
     }
 
-    private var expandedSheetHeader: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Assignments")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+    private var sheetHeader: some View {
+        VStack(spacing: 10) {
+            Capsule()
+                .fill(.secondary.opacity(0.55))
+                .frame(width: 38, height: 5)
+                .padding(.top, 10)
 
-                    Text(weekRangeLabel)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer(minLength: 0)
-
-                Text("\(filteredAssignments.count)")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .frame(minWidth: 60, minHeight: 60)
-                    .liquidGlassSurface(cornerRadius: 22, tint: .blue.opacity(0.14))
+            HStack {
+                Text("Assignments")
+                    .font(.title2.weight(.bold))
+                Spacer()
             }
-
-            HStack(spacing: 10) {
-                sheetInfoChip(title: selectedSubjectFilterTitle, systemImage: "line.3.horizontal.decrease.circle")
-                sheetInfoChip(title: "\(groupedAssignments.count) subjects", systemImage: "square.grid.2x2")
-            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 10)
         }
-    }
-
-    private func sheetInfoChip(title: String, systemImage: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .font(.system(size: 14, weight: .semibold))
-            Text(title)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .lineLimit(1)
-        }
-        .foregroundStyle(.primary)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .liquidGlassSurface(cornerRadius: 20, tint: .white.opacity(0.06))
-    }
-
-    private var selectedSubjectFilterTitle: String {
-        switch selectedSubjectFilter {
-        case .all:
-            return "All Subjects"
-        case .subject(let subject):
-            return subject
-        }
-    }
-
-    private func sheetTabMenu(bottomInset: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            FindMyCollapsedTabBar(selection: $tabSelection)
-                .frame(height: 58)
-                .padding(.horizontal, 10)
-                .padding(.top, 1)
-
-            Spacer(minLength: max(bottomInset - 4, 0))
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 66 + bottomInset)
+        .contentShape(Rectangle())
     }
 
     private var sheetEmptyState: some View {
@@ -382,9 +230,35 @@ struct AssignmentsView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 20)
-        .liquidGlassSurface(cornerRadius: 28, tint: .white.opacity(0.04))
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+    }
+
+    private func sheetProgressValue(
+        collapsedHeight: CGFloat,
+        expandedHeight: CGFloat
+    ) -> CGFloat {
+        let travel = max(expandedHeight - collapsedHeight, 1)
+        return min(max(sheetProgress - sheetDragTranslation / travel, 0), 1)
+    }
+
+    private func sheetDragGesture(
+        collapsedHeight: CGFloat,
+        expandedHeight: CGFloat
+    ) -> some Gesture {
+        let travel = max(expandedHeight - collapsedHeight, 1)
+
+        return DragGesture()
+            .updating($sheetDragTranslation) { value, state, _ in
+                state = value.translation.height
+            }
+            .onEnded { value in
+                let projected = value.predictedEndTranslation.height
+                let nextProgress = min(max(sheetProgress - projected / travel, 0), 1)
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                    sheetProgress = nextProgress > 0.45 ? 1 : 0
+                }
+            }
     }
 
     private var emptyState: some View {
@@ -405,50 +279,37 @@ struct AssignmentsView: View {
     }
 
     private func assignmentRow(for assignment: TimetableAssignment) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(assignmentColor(for: assignment.subject))
-                .frame(width: 6, height: 52)
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(assignment.content)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .multilineTextAlignment(.leading)
-                        .strikethrough(assignment.isFinished)
-                        .lineLimit(2)
-
-                    Spacer(minLength: 8)
-
-                    Text("Due \(formatDate(assignment.dueDate))")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .fixedSize()
-                }
-
-                HStack(spacing: 8) {
-                    Text(assignment.subject)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .strikethrough(assignment.isFinished)
-
-                    Circle()
-                        .fill(.secondary.opacity(0.35))
-                        .frame(width: 3, height: 3)
-
-                    Text("Start \(formatDate(assignment.startDate))")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(assignment.subject)
+                    .font(.headline)
+                    .strikethrough(assignment.isFinished)
+                Spacer()
+                Text("Due \(formatDate(assignment.dueDate))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+
+            Text(assignment.content)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .strikethrough(assignment.isFinished)
+
+            Text("Start \(formatDate(assignment.startDate))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .liquidGlassSurface(cornerRadius: 24, tint: assignmentColor(for: assignment.subject).opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(.white.opacity(0.18), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .opacity(assignment.isFinished ? 0.6 : 1)
     }
 
@@ -476,7 +337,8 @@ struct AssignmentsView: View {
                         NavigationLink(destination: AddAssignmentsView(assignmentID: assignment.id)) {
                             assignmentRow(for: assignment)
                         }
-                        .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                        .buttonStyle(.plain)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         .listRowBackground(Color.clear)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(assignment.isFinished ? "Mark Active" : "Set as Completed") {
@@ -1039,160 +901,6 @@ func formatDate(_ date: Date) -> String {
 private extension String {
     var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-}
-
-private extension View {
-    @ViewBuilder
-    func liquidGlassSurface(
-        cornerRadius: CGFloat,
-        tint: Color = .clear,
-        interactive: Bool = false
-    ) -> some View {
-        if #available(iOS 26.0, *) {
-            if interactive {
-                self.glassEffect(
-                    .regular.tint(tint).interactive(),
-                    in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                )
-            } else {
-                self.glassEffect(
-                    .regular.tint(tint),
-                    in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                )
-            }
-        } else {
-            self
-                .background(
-                    .ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(.white.opacity(0.18), lineWidth: 1)
-                }
-        }
-    }
-}
-
-private struct FindMyCollapsedTabBar: View {
-    @Binding var selection: AppTab
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(AppTab.allCases, id: \.self) { tab in
-                Button {
-                    selection = tab
-                } label: {
-                    VStack(spacing: 8) {
-                        Image(systemName: tab.systemImage)
-                            .font(.system(size: 21, weight: tab == selection ? .semibold : .medium))
-                            .symbolRenderingMode(.monochrome)
-                            .frame(height: 24, alignment: .bottom)
-
-                        Text(tab.title)
-                            .font(.system(size: 12, weight: tab == selection ? .semibold : .medium))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    .foregroundStyle(tab == selection ? Color.blue : Color.white.opacity(0.94))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 66)
-                    .padding(.top, 5)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-}
-
-private struct NativeSheetTabBar: UIViewRepresentable {
-    @Binding var selection: AppTab
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(selection: $selection)
-    }
-
-    func makeUIView(context: Context) -> UITabBar {
-        let tabBar = UITabBar(frame: .zero)
-        tabBar.delegate = context.coordinator
-        tabBar.items = AppTab.allCases.map(\.tabBarItem)
-        tabBar.selectedItem = selection.tabBarItem
-        let appearance = UITabBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundColor = .clear
-        appearance.shadowColor = .clear
-        appearance.selectionIndicatorImage = UIImage()
-
-        let normalColor = UIColor.white.withAlphaComponent(0.92)
-        let selectedColor = UIColor.systemBlue
-        let normalAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: normalColor,
-            .font: UIFont.systemFont(ofSize: 12, weight: .medium)
-        ]
-        let selectedAttributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: selectedColor,
-            .font: UIFont.systemFont(ofSize: 12, weight: .semibold)
-        ]
-
-        for layout in [
-            appearance.stackedLayoutAppearance,
-            appearance.inlineLayoutAppearance,
-            appearance.compactInlineLayoutAppearance
-        ] {
-            layout.normal.iconColor = normalColor
-            layout.normal.titleTextAttributes = normalAttributes
-            layout.selected.iconColor = selectedColor
-            layout.selected.titleTextAttributes = selectedAttributes
-        }
-
-        tabBar.standardAppearance = appearance
-        tabBar.itemPositioning = .fill
-        tabBar.itemSpacing = 0
-        tabBar.itemWidth = 0
-        tabBar.backgroundColor = .clear
-        tabBar.isTranslucent = true
-        tabBar.tintColor = selectedColor
-        tabBar.unselectedItemTintColor = normalColor
-        if #available(iOS 15.0, *) {
-            tabBar.scrollEdgeAppearance = appearance
-        }
-        return tabBar
-    }
-
-    func updateUIView(_ uiView: UITabBar, context: Context) {
-        let items = AppTab.allCases.map(\.tabBarItem)
-        if uiView.items?.map(\.tag) != items.map(\.tag) {
-            uiView.items = items
-        }
-        uiView.selectedItem = uiView.items?.first(where: { $0.tag == selection.rawValue })
-        context.coordinator.selection = $selection
-    }
-
-    final class Coordinator: NSObject, UITabBarDelegate {
-        var selection: Binding<AppTab>
-
-        init(selection: Binding<AppTab>) {
-            self.selection = selection
-        }
-
-        func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-            guard let tab = AppTab(rawValue: item.tag) else { return }
-            selection.wrappedValue = tab
-        }
-    }
-}
-
-private extension AppTab {
-    var tabBarItem: UITabBarItem {
-        let item = UITabBarItem(
-            title: title,
-            image: UIImage(systemName: systemImage),
-            selectedImage: UIImage(systemName: systemImage)
-        )
-        item.tag = rawValue
-        return item
     }
 }
 
