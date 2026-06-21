@@ -17,37 +17,43 @@ struct AssignmentsView: View {
     @State private var timelineScrollRequestID = UUID()
     @State private var sheetProgress: CGFloat = 0
     @GestureState private var sheetDragTranslation: CGFloat = 0
+    @GestureState private var isSheetDragging = false
 
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
-                let collapsedSheetHeight: CGFloat = 80
-                let expandedSheetHeight = min(geo.size.height * 0.74, geo.size.height - 20)
+                let collapsedSheetHeight: CGFloat = 28
+                let expandedSheetHeight = max(geo.size.height - 28, collapsedSheetHeight)
+                let progress = sheetProgressValue(
+                    collapsedHeight: collapsedSheetHeight,
+                    expandedHeight: expandedSheetHeight
+                )
 
-                VStack(spacing: 0) {
-                    GlassCard {
-                        VStack(alignment: .leading, spacing: 16) {
-                            controlsRow
-                            weekSummary
-                            BarAssignmentsView(
-                                assignments: weekAssignments,
-                                visibleWeekStart: $selectedWeekStart,
-                                scrollRequestID: timelineScrollRequestID,
-                                subjectColor: assignmentColor(for:)
-                            )
+                ZStack(alignment: .bottom) {
+                    VStack(spacing: 0) {
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 16) {
+                                controlsRow
+                                weekSummary
+                                BarAssignmentsView(
+                                    assignments: weekAssignments,
+                                    visibleWeekStart: $selectedWeekStart,
+                                    scrollRequestID: timelineScrollRequestID,
+                                    subjectColor: assignmentColor(for:)
+                                )
+                            }
                         }
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: 0)
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
+
                     bottomSheetContent(
                         collapsedHeight: collapsedSheetHeight,
                         expandedHeight: expandedSheetHeight
                     )
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 4)
+                    .offset(y: 8)
                 }
             }
             .toolbar {
@@ -174,11 +180,20 @@ struct AssignmentsView: View {
         collapsedHeight: CGFloat,
         expandedHeight: CGFloat
     ) -> some View {
-        let progress = sheetProgressValue(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)
+        let progress = sheetProgressValue(
+            collapsedHeight: collapsedHeight,
+            expandedHeight: expandedHeight
+        )
+        let contentProgress = max(0, min((progress - 0.14) / 0.86, 1))
 
         return VStack(spacing: 0) {
-            sheetHeader
-                .gesture(sheetDragGesture(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight))
+            sheetHeader(progress: progress)
+                .highPriorityGesture(
+                    sheetDragGesture(
+                        collapsedHeight: collapsedHeight,
+                        expandedHeight: expandedHeight
+                    )
+                )
 
             Group {
                 if filteredAssignments.isEmpty {
@@ -188,23 +203,38 @@ struct AssignmentsView: View {
                 }
             }
             .frame(maxHeight: .infinity, alignment: .top)
+            .opacity(contentProgress)
+            .allowsHitTesting(!isSheetDragging && contentProgress > 0.98)
         }
         .frame(maxWidth: .infinity)
         .frame(height: collapsedHeight + (expandedHeight - collapsedHeight) * progress, alignment: .top)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .background {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .opacity(progress)
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(.white.opacity(0.12), lineWidth: 1)
+                .stroke(.white.opacity(0.12 * progress), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.14), radius: 16, y: -2)
+        .shadow(color: .black.opacity(0.14 * progress), radius: 16, y: -2)
     }
 
-    private var sheetHeader: some View {
-        VStack(spacing: 10) {
-            Capsule()
-                .fill(.secondary.opacity(0.55))
-                .frame(width: 38, height: 5)
-                .padding(.top, 10)
+    private func sheetHeader(progress: CGFloat) -> some View {
+        let titleReveal = max(0, min((progress - 0.04) / 0.96, 1))
+        let handleAreaHeight: CGFloat = 28
+
+        return VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
+                Color.clear
+
+                Capsule()
+                    .fill(.secondary.opacity(0.55))
+                    .frame(width: 36, height: 4)
+                    .padding(.bottom, 6)
+            }
+            .frame(height: handleAreaHeight)
 
             HStack {
                 Text("Assignments")
@@ -212,8 +242,12 @@ struct AssignmentsView: View {
                 Spacer()
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 10)
+            .frame(height: 36 * titleReveal, alignment: .bottom)
+            .padding(.bottom, 10 * titleReveal)
+            .opacity(titleReveal)
+            .clipped()
         }
+        .frame(maxWidth: .infinity, alignment: .top)
         .contentShape(Rectangle())
     }
 
@@ -238,25 +272,50 @@ struct AssignmentsView: View {
         collapsedHeight: CGFloat,
         expandedHeight: CGFloat
     ) -> CGFloat {
-        let travel = max(expandedHeight - collapsedHeight, 1)
+        let travel = drawerInteractiveTravel(
+            collapsedHeight: collapsedHeight,
+            expandedHeight: expandedHeight
+        )
         return min(max(sheetProgress - sheetDragTranslation / travel, 0), 1)
+    }
+
+    private func drawerInteractiveTravel(
+        collapsedHeight: CGFloat,
+        expandedHeight: CGFloat
+    ) -> CGFloat {
+        max(expandedHeight - collapsedHeight, 1)
     }
 
     private func sheetDragGesture(
         collapsedHeight: CGFloat,
         expandedHeight: CGFloat
     ) -> some Gesture {
-        let travel = max(expandedHeight - collapsedHeight, 1)
+        let travel = drawerInteractiveTravel(
+            collapsedHeight: collapsedHeight,
+            expandedHeight: expandedHeight
+        )
 
         return DragGesture()
+            .updating($isSheetDragging) { _, state, _ in
+                state = true
+            }
             .updating($sheetDragTranslation) { value, state, _ in
                 state = value.translation.height
             }
             .onEnded { value in
-                let projected = value.predictedEndTranslation.height
-                let nextProgress = min(max(sheetProgress - projected / travel, 0), 1)
-                withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-                    sheetProgress = nextProgress > 0.45 ? 1 : 0
+                let liveProgress = min(max(sheetProgress - value.translation.height / travel, 0), 1)
+                let projectedBoost = ((value.translation.height - value.predictedEndTranslation.height) / travel) * 0.08
+                let finalProgress = min(max(liveProgress + projectedBoost, 0), 1)
+                let targetProgress: CGFloat
+
+                if sheetProgress > 0.5 {
+                    targetProgress = finalProgress < 0.62 ? 0 : 1
+                } else {
+                    targetProgress = finalProgress > 0.10 ? 1 : 0
+                }
+
+                withAnimation(.interactiveSpring(response: 0.22, dampingFraction: 0.94, blendDuration: 0.12)) {
+                    sheetProgress = targetProgress
                 }
             }
     }
@@ -330,35 +389,43 @@ struct AssignmentsView: View {
     }
 
     private var assignmentsList: some View {
-        List {
-            ForEach(groupedAssignments) { group in
-                Section {
-                    ForEach(group.assignments) { assignment in
-                        NavigationLink(destination: AddAssignmentsView(assignmentID: assignment.id)) {
-                            assignmentRow(for: assignment)
-                        }
-                        .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                        .listRowBackground(Color.clear)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(assignment.isFinished ? "Mark Active" : "Set as Completed") {
-                                toggleCompletion(for: assignment)
-                            }
-                            .tint(.green)
+        ScrollView(.vertical, showsIndicators: false) {
+            LazyVStack(alignment: .leading, spacing: 14) {
+                ForEach(Array(groupedAssignments.enumerated()), id: \.element.id) { index, group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(group.subject)
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
 
-                            Button("Delete", role: .destructive) {
-                                deleteAssignment(assignment)
+                        ForEach(group.assignments) { assignment in
+                            NavigationLink(destination: AddAssignmentsView(assignmentID: assignment.id)) {
+                                assignmentRow(for: assignment)
                             }
-                            .tint(.red)
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(assignment.isFinished ? "Mark Active" : "Set as Completed") {
+                                    toggleCompletion(for: assignment)
+                                }
+                                .tint(.green)
+
+                                Button("Delete", role: .destructive) {
+                                    deleteAssignment(assignment)
+                                }
+                                .tint(.red)
+                            }
+                        }
+
+                        if index < groupedAssignments.count - 1 {
+                            Divider()
+                                .padding(.top, 4)
                         }
                     }
-                } header: {
-                    Text(group.subject)
+                    .padding(.horizontal, 16)
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
+        .padding(.top, 6)
+        .padding(.bottom, 18)
     }
 
     private func toggleCompletion(for assignment: TimetableAssignment) {
