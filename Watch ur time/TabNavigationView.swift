@@ -7,19 +7,60 @@
 
 import SwiftUI
 
+enum AppTab: Int, Hashable, CaseIterable {
+    case timetable
+    case notification
+    case assignments
+    case settings
+
+    var title: String {
+        switch self {
+        case .timetable:
+            return "Timetable"
+        case .notification:
+            return "Notification"
+        case .assignments:
+            return "Assignments"
+        case .settings:
+            return "Settings"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .timetable:
+            return "calendar.badge.clock"
+        case .notification:
+            return "bell.fill"
+        case .assignments:
+            return "book.closed.fill"
+        case .settings:
+            return "gear"
+        }
+    }
+}
+
 struct TabNavigationView: View {
-    @State private var tabSelection: Int = 0
+    @State private var tabSelection: AppTab = .timetable
     @State var day: Int = 1
     
     var body: some View {
-        TabView {
-            TimeTableView(day: $day).tabItem{ Label("Timetable", systemImage: "calendar.badge.clock") }
+        TabView(selection: $tabSelection) {
+            TimeTableView(day: $day)
+                .tabItem { Label(AppTab.timetable.title, systemImage: AppTab.timetable.systemImage) }
+                .tag(AppTab.timetable)
             
-            NotificationView(day: $day).tabItem { Label("Notification", systemImage: "bell.fill") }
+            NotificationView(day: $day)
+                .tabItem { Label(AppTab.notification.title, systemImage: AppTab.notification.systemImage) }
+                .tag(AppTab.notification)
             
-            AssignmentsView().tabItem { Label("Assignments", systemImage: "book.closed.fill") }
+            AssignmentsView(tabSelection: $tabSelection)
+                .tabItem { Label(AppTab.assignments.title, systemImage: AppTab.assignments.systemImage) }
+                .tag(AppTab.assignments)
             
-            SettingsView().tabItem { Label("Settings", systemImage: "gear") }
+            SettingsView()
+                .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.systemImage) }
+                .tag(AppTab.settings)
         }
     }
 }
