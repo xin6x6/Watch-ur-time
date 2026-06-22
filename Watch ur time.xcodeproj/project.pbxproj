@@ -77,6 +77,9 @@
 			membershipExceptions = (
 				Assets.xcassets,
 				ContentView.swift,
+				styles/GlassCard.swift,
+				subPages/AssignmentsView.swift,
+				subPages/TimeTableView.swift,
 				Time_on_ur_watchApp.swift,
 			);
 			target = 85F85AE92FE954CD0086F539 /* Time on ur watch Watch App */;
@@ -86,6 +89,9 @@
 			membershipExceptions = (
 				Assets.xcassets,
 				ContentView.swift,
+				styles/GlassCard.swift,
+				subPages/AssignmentsView.swift,
+				subPages/TimeTableView.swift,
 				Time_on_ur_watchApp.swift,
 			);
 			target = 85F85AFF2FE954CE0086F539 /* Time on ur watch Watch AppUITests */;
