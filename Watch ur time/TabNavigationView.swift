@@ -41,8 +41,9 @@ enum AppTab: Int, Hashable, CaseIterable {
 }
 
 struct TabNavigationView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var tabSelection: AppTab = .timetable
-    @State var day: Int = 1
+    @State private var day: Int = Self.currentTimetableDay()
     
     var body: some View {
         TabView(selection: $tabSelection) {
@@ -61,6 +62,30 @@ struct TabNavigationView: View {
             SettingsView()
                 .tabItem { Label(AppTab.settings.title, systemImage: AppTab.settings.systemImage) }
                 .tag(AppTab.settings)
+        }
+        .onAppear {
+            syncDayWithCurrentWeekday()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                syncDayWithCurrentWeekday()
+            }
+        }
+    }
+
+    private func syncDayWithCurrentWeekday() {
+        day = Self.currentTimetableDay()
+    }
+
+    private static func currentTimetableDay(for date: Date = Date()) -> Int {
+        switch Calendar.current.component(.weekday, from: date) {
+        case 2: return 1
+        case 3: return 2
+        case 4: return 3
+        case 5: return 4
+        case 6: return 5
+        case 7, 1: return 1
+        default: return 1
         }
     }
 }
