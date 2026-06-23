@@ -10,10 +10,22 @@ import SwiftUI
 
 @main
 struct Watch_ur_timeApp: App {
+    private let sharedModelContainer: ModelContainer
+    @StateObject private var watchSyncManager: PhoneWatchSyncManager
+
+    init() {
+        let container = try! ModelContainer(for: TimetableStore.self)
+        self.sharedModelContainer = container
+        _watchSyncManager = StateObject(
+            wrappedValue: PhoneWatchSyncManager(modelContainer: container)
+        )
+    }
+
     var body: some Scene {
         WindowGroup {
             TabNavigationView()
+                .environmentObject(watchSyncManager)
         }
-        .modelContainer(for: [TimetableStore.self])
+        .modelContainer(sharedModelContainer)
     }
 }

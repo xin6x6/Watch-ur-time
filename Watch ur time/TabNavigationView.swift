@@ -5,6 +5,7 @@
 //  Created by Ng1nx on 6/8/26.
 //
 
+import SwiftData
 import SwiftUI
 
 enum AppTab: Int, Hashable, CaseIterable {
@@ -42,6 +43,8 @@ enum AppTab: Int, Hashable, CaseIterable {
 
 struct TabNavigationView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var watchSyncManager: PhoneWatchSyncManager
+    @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
     @State private var tabSelection: AppTab = .timetable
     @State private var day: Int = Self.currentTimetableDay()
     
@@ -65,11 +68,16 @@ struct TabNavigationView: View {
         }
         .onAppear {
             syncDayWithCurrentWeekday()
+            watchSyncManager.pushLatestSnapshotIfPossible()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 syncDayWithCurrentWeekday()
+                watchSyncManager.pushLatestSnapshotIfPossible()
             }
+        }
+        .onChange(of: stores.first?.updatedAt) { _, _ in
+            watchSyncManager.pushLatestSnapshotIfPossible()
         }
     }
 
@@ -91,5 +99,8 @@ struct TabNavigationView: View {
 }
 
 #Preview {
+    let container = try! ModelContainer(for: TimetableStore.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     TabNavigationView()
+        .environmentObject(PhoneWatchSyncManager(modelContainer: container, activateSession: false))
+        .modelContainer(container)
 }

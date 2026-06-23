@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct Time_on_ur_watch_Watch_AppApp: App {
+    @StateObject private var dataStore = WatchDataStore()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(dataStore)
         }
     }
 }

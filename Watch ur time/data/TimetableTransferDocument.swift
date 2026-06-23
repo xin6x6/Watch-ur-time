@@ -2,7 +2,7 @@
 //  TimetableTransferDocument.swift
 //  Watch ur time
 //
-//  Created by Codex on 6/20/26.
+//  Created By Ng1nx on 6/20/26.
 //
 
 import Foundation
