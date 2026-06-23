@@ -519,6 +519,17 @@ struct TimetableStoreSnapshot: Codable {
     var assignments: [TimetableAssignment]
 }
 
+extension TimetableStoreSnapshot {
+    static let empty = TimetableStoreSnapshot(
+        updatedAt: .now,
+        subjects: [],
+        slots: [],
+        placements: [],
+        notificationSettings: [],
+        assignments: []
+    )
+}
+
 extension TimetableStore {
     var snapshot: TimetableStoreSnapshot {
         TimetableStoreSnapshot(

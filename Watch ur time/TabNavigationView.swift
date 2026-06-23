@@ -44,6 +44,7 @@ enum AppTab: Int, Hashable, CaseIterable {
 struct TabNavigationView: View {
     @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var watchSyncManager: PhoneWatchSyncManager
+    @EnvironmentObject private var classReminderScheduler: ClassReminderScheduler
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
     @State private var tabSelection: AppTab = .timetable
     @State private var day: Int = Self.currentTimetableDay()
@@ -68,21 +69,31 @@ struct TabNavigationView: View {
         }
         .onAppear {
             syncDayWithCurrentWeekday()
-            watchSyncManager.pushLatestSnapshotIfPossible()
+            syncSharedOutputs()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 syncDayWithCurrentWeekday()
-                watchSyncManager.pushLatestSnapshotIfPossible()
+                syncSharedOutputs()
             }
         }
         .onChange(of: stores.first?.updatedAt) { _, _ in
-            watchSyncManager.pushLatestSnapshotIfPossible()
+            syncSharedOutputs()
         }
     }
 
     private func syncDayWithCurrentWeekday() {
         day = Self.currentTimetableDay()
+    }
+
+    private func syncSharedOutputs() {
+        let snapshot = stores.first?.snapshot ?? .empty
+        watchSyncManager.pushLatestSnapshotIfPossible()
+        WidgetSnapshotStore.shared.update(with: snapshot)
+
+        Task {
+            await classReminderScheduler.sync(with: snapshot)
+        }
     }
 
     private static func currentTimetableDay(for date: Date = Date()) -> Int {
@@ -102,5 +113,6 @@ struct TabNavigationView: View {
     let container = try! ModelContainer(for: TimetableStore.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     TabNavigationView()
         .environmentObject(PhoneWatchSyncManager(modelContainer: container, activateSession: false))
+        .environmentObject(ClassReminderScheduler())
         .modelContainer(container)
 }

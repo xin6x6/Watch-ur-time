@@ -15,11 +15,14 @@ enum WatchSyncMessageKey {
     static let snapshot = "snapshot"
     static let assignment = "assignment"
     static let assignmentID = "assignmentID"
+    static let fireTimestamp = "fireTimestamp"
 
     static let requestSnapshot = "requestSnapshot"
     static let upsertAssignment = "upsertAssignment"
     static let deleteAssignment = "deleteAssignment"
     static let toggleAssignment = "toggleAssignment"
+    static let scheduleWatchTestReminder = "scheduleWatchTestReminder"
+    static let clearWatchTestReminder = "clearWatchTestReminder"
 }
 
 @MainActor
@@ -61,12 +64,38 @@ final class PhoneWatchSyncManager: NSObject, ObservableObject {
         }
     }
 
+    func scheduleWatchTestReminder(after interval: TimeInterval = 60) {
+        sendWatchMessage([
+            WatchSyncMessageKey.action: WatchSyncMessageKey.scheduleWatchTestReminder,
+            WatchSyncMessageKey.fireTimestamp: Date().addingTimeInterval(interval).timeIntervalSince1970
+        ])
+    }
+
+    func clearWatchTestReminder() {
+        sendWatchMessage([
+            WatchSyncMessageKey.action: WatchSyncMessageKey.clearWatchTestReminder
+        ])
+    }
+
     private func encodedSnapshotPayload() -> [String: Any]? {
         guard let data = try? encoder.encode(currentSnapshot()) else {
             return nil
         }
 
         return [WatchSyncMessageKey.snapshot: data]
+    }
+
+    private func sendWatchMessage(_ payload: [String: Any]) {
+        guard WCSession.isSupported() else {
+            return
+        }
+
+        let session = WCSession.default
+        if session.isReachable {
+            session.sendMessage(payload, replyHandler: nil)
+        } else {
+            session.transferUserInfo(payload)
+        }
     }
 
     private func currentSnapshot() -> TimetableStoreSnapshot {

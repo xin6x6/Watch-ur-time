@@ -22,11 +22,14 @@ enum WatchSyncMessageKey {
     static let snapshot = "snapshot"
     static let assignment = "assignment"
     static let assignmentID = "assignmentID"
+    static let fireTimestamp = "fireTimestamp"
 
     static let requestSnapshot = "requestSnapshot"
     static let upsertAssignment = "upsertAssignment"
     static let deleteAssignment = "deleteAssignment"
     static let toggleAssignment = "toggleAssignment"
+    static let scheduleWatchTestReminder = "scheduleWatchTestReminder"
+    static let clearWatchTestReminder = "clearWatchTestReminder"
 }
 
 enum WatchNotificationMoment: Int, Codable, CaseIterable, Identifiable {
@@ -225,12 +228,16 @@ final class WatchDataStore: NSObject, ObservableObject {
     private let storageKey = "watch_timetable_snapshot"
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let reminderScheduler = WatchClassReminderScheduler()
 
     override init() {
         self.snapshot = Self.loadSnapshot(storageKey: storageKey)
         self.selectedDay = Self.currentTimetableDay()
         super.init()
         activateSession()
+        Task {
+            await reminderScheduler.sync(with: snapshot)
+        }
     }
 
     var availableSubjects: [String] {
@@ -412,6 +419,41 @@ final class WatchDataStore: NSObject, ObservableObject {
 
         snapshot = decoded
         persistSnapshot()
+        Task {
+            await reminderScheduler.sync(with: decoded)
+        }
+    }
+
+    private func handle(message: [String: Any]) {
+        if let action = message[WatchSyncMessageKey.action] as? String {
+            switch action {
+            case WatchSyncMessageKey.scheduleWatchTestReminder:
+                guard let timestamp = message[WatchSyncMessageKey.fireTimestamp] as? TimeInterval else {
+                    return
+                }
+                Task {
+                    await reminderScheduler.scheduleDebugReminder(
+                        at: Date(timeIntervalSince1970: timestamp)
+                    )
+                }
+                return
+
+            case WatchSyncMessageKey.clearWatchTestReminder:
+                Task {
+                    await reminderScheduler.clearDebugReminder()
+                }
+                return
+
+            default:
+                break
+            }
+        }
+
+        guard let data = message[WatchSyncMessageKey.snapshot] as? Data else {
+            return
+        }
+
+        applySnapshotData(data)
     }
 
     private func requestLatestSnapshot() {
@@ -500,22 +542,20 @@ extension WatchDataStore: WCSessionDelegate {
     }
 
     nonisolated func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        guard let data = applicationContext[WatchSyncMessageKey.snapshot] as? Data else {
-            return
-        }
-
         Task { @MainActor in
-            self.applySnapshotData(data)
+            self.handle(message: applicationContext)
         }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        guard let data = message[WatchSyncMessageKey.snapshot] as? Data else {
-            return
-        }
-
         Task { @MainActor in
-            self.applySnapshotData(data)
+            self.handle(message: message)
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        Task { @MainActor in
+            self.handle(message: userInfo)
         }
     }
 }

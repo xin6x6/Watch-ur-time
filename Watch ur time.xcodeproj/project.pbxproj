@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		85F85B0A2FE954CE0086F539 /* Time on ur watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 85F85AEA2FE954CD0086F539 /* Time on ur watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		86A100022FEA000100000001 /* Watch ur time Widget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 86A100012FEA000100000001 /* Watch ur time Widget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,13 @@
 			remoteGlobalIDString = 85F85AE92FE954CD0086F539;
 			remoteInfo = "Time on ur watch Watch App";
 		};
+		86A100032FEA000100000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85126FF32FD6DBF600CC128F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 86A1000B2FEA000100000001;
+			remoteInfo = "Watch ur time Widget";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -60,6 +68,17 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		86A100042FEA000100000001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				86A100022FEA000100000001 /* Watch ur time Widget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +88,7 @@
 		85F85AEA2FE954CD0086F539 /* Time on ur watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Time on ur watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		85F85AF62FE954CE0086F539 /* Time on ur watch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Time on ur watch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		85F85B002FE954CE0086F539 /* Time on ur watch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Time on ur watch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		86A100012FEA000100000001 /* Watch ur time Widget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Watch ur time Widget.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -77,6 +97,7 @@
 			membershipExceptions = (
 				Assets.xcassets,
 				ContentView.swift,
+				data/WatchClassReminderScheduler.swift,
 				data/WatchDataStore.swift,
 				styles/GlassCard.swift,
 				subPages/AssignmentsView.swift,
@@ -97,11 +118,28 @@
 			);
 			target = 85F85AFF2FE954CE0086F539 /* Time on ur watch Watch AppUITests */;
 		};
+		86A1000F2FEA000100000001 /* Exceptions for "Watch ur time Widget" folder in "Watch ur time Widget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 86A1000B2FEA000100000001 /* Watch ur time Widget */;
+		};
+		86A100102FEA000100000001 /* Exceptions for "Watch ur time" folder in "Watch ur time" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 85126FFA2FD6DBF600CC128F /* Watch ur time */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		85126FFD2FD6DBF600CC128F /* Watch ur time */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				86A100102FEA000100000001 /* Exceptions for "Watch ur time" folder in "Watch ur time" target */,
+			);
 			path = "Watch ur time";
 			sourceTree = "<group>";
 		};
@@ -132,6 +170,19 @@
 				85F85B282FE959490086F539 /* Exceptions for "Time on ur watch Watch App" folder in "Time on ur watch Watch AppUITests" target */,
 			);
 			path = "Time on ur watch Watch App";
+			sourceTree = "<group>";
+		};
+		86A100052FEA000100000001 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		86A100062FEA000100000001 /* Watch ur time Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				86A1000F2FEA000100000001 /* Exceptions for "Watch ur time Widget" folder in "Watch ur time Widget" target */,
+			);
+			path = "Watch ur time Widget";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -179,6 +230,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		86A100072FEA000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -192,6 +250,8 @@
 				85F85B032FE954CE0086F539 /* Time on ur watch Watch AppUITests */,
 				85126FFC2FD6DBF600CC128F /* Products */,
 				85F85B232FE959480086F539 /* Time on ur watch Watch App */,
+				86A100052FEA000100000001 /* Shared */,
+				86A100062FEA000100000001 /* Watch ur time Widget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -204,6 +264,7 @@
 				85F85AEA2FE954CD0086F539 /* Time on ur watch Watch App.app */,
 				85F85AF62FE954CE0086F539 /* Time on ur watch Watch AppTests.xctest */,
 				85F85B002FE954CE0086F539 /* Time on ur watch Watch AppUITests.xctest */,
+				86A100012FEA000100000001 /* Watch ur time Widget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -218,15 +279,18 @@
 				85126FF72FD6DBF600CC128F /* Sources */,
 				85126FF82FD6DBF600CC128F /* Frameworks */,
 				85126FF92FD6DBF600CC128F /* Resources */,
+				86A100042FEA000100000001 /* Embed App Extensions */,
 				85F85B0E2FE954CE0086F539 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				86A1000A2FEA000100000001 /* PBXTargetDependency */,
 				85F85B092FE954CE0086F539 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				85126FFD2FD6DBF600CC128F /* Watch ur time */,
+				86A100052FEA000100000001 /* Shared */,
 			);
 			name = "Watch ur time";
 			packageProductDependencies = (
@@ -347,6 +411,29 @@
 			productReference = 85F85B002FE954CE0086F539 /* Time on ur watch Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		86A1000B2FEA000100000001 /* Watch ur time Widget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 86A1000E2FEA000100000001 /* Build configuration list for PBXNativeTarget "Watch ur time Widget" */;
+			buildPhases = (
+				86A100092FEA000100000001 /* Sources */,
+				86A100072FEA000100000001 /* Frameworks */,
+				86A100082FEA000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				86A100052FEA000100000001 /* Shared */,
+				86A100062FEA000100000001 /* Watch ur time Widget */,
+			);
+			name = "Watch ur time Widget";
+			packageProductDependencies = (
+			);
+			productName = "Watch ur time Widget";
+			productReference = 86A100012FEA000100000001 /* Watch ur time Widget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -379,6 +466,9 @@
 						CreatedOnToolsVersion = 26.5;
 						TestTargetID = 85F85AE92FE954CD0086F539;
 					};
+					86A1000B2FEA000100000001 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 				};
 			};
 			buildConfigurationList = 85126FF62FD6DBF600CC128F /* Build configuration list for PBXProject "Watch ur time" */;
@@ -401,6 +491,7 @@
 				85F85AE92FE954CD0086F539 /* Time on ur watch Watch App */,
 				85F85AF52FE954CE0086F539 /* Time on ur watch Watch AppTests */,
 				85F85AFF2FE954CE0086F539 /* Time on ur watch Watch AppUITests */,
+				86A1000B2FEA000100000001 /* Watch ur time Widget */,
 			);
 		};
 /* End PBXProject section */
@@ -442,6 +533,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		85F85AFE2FE954CE0086F539 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		86A100082FEA000100000001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -493,6 +591,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		86A100092FEA000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -520,6 +625,11 @@
 			isa = PBXTargetDependency;
 			target = 85F85AE92FE954CD0086F539 /* Time on ur watch Watch App */;
 			targetProxy = 85F85B082FE954CE0086F539 /* PBXContainerItemProxy */;
+		};
+		86A1000A2FEA000100000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 86A1000B2FEA000100000001 /* Watch ur time Widget */;
+			targetProxy = 86A100032FEA000100000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -651,16 +761,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = "Watch ur time/Watch ur timeRelease.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J2L979PXTP;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Watch Ur Time!";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Watch ur time/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -685,16 +792,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = "Watch ur time/Watch ur timeRelease.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J2L979PXTP;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Watch Ur Time!";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Watch ur time/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -953,6 +1057,70 @@
 			};
 			name = Release;
 		};
+		86A1000C2FEA000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "Watch ur time Widget/Watch_ur_time_Widget.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J2L979PXTP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Watch ur time Widget/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "Dev 0.67";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		86A1000D2FEA000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = "Watch ur time Widget/Watch_ur_time_Widget.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J2L979PXTP;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Watch ur time Widget/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "Dev 0.67";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1015,6 +1183,15 @@
 			buildConfigurations = (
 				85F85B132FE954CE0086F539 /* Debug */,
 				85F85B142FE954CE0086F539 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		86A1000E2FEA000100000001 /* Build configuration list for PBXNativeTarget "Watch ur time Widget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				86A1000C2FEA000100000001 /* Debug */,
+				86A1000D2FEA000100000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

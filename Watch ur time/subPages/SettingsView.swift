@@ -18,6 +18,8 @@ enum Themes: String, CaseIterable {
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var classReminderScheduler: ClassReminderScheduler
+    @EnvironmentObject private var watchSyncManager: PhoneWatchSyncManager
     @AppStorage("theme") private var themes: Themes = .System
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -44,6 +46,49 @@ struct SettingsView: View {
 
                 Button("Import Timetable") {
                     isImporting = true
+                }
+            }
+
+            Section("Debug") {
+                HStack {
+                    Text("Alarm Permission")
+                    Spacer()
+                    Text(classReminderScheduler.alarmAuthorizationDebugText())
+                        .foregroundStyle(.secondary)
+                }
+
+                Button("Request Alarm Permission") {
+                    Task {
+                        transferMessage = await classReminderScheduler.requestAlarmAuthorizationDebug()
+                    }
+                }
+
+                Button("Show Alarm Auth Status") {
+                    transferMessage = classReminderScheduler.dumpAlarmAuthorizationDebug()
+                }
+
+                Button("Show Alarm Runtime Details") {
+                    transferMessage = classReminderScheduler.alarmRuntimeDiagnosticReport()
+                }
+
+                Button("Schedule Test Alarm In 1 Min") {
+                    Task {
+                        let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
+                        watchSyncManager.scheduleWatchTestReminder()
+                        transferMessage = "\(phoneResult)\nWatch test reminder requested."
+                    }
+                }
+
+                Button("Clear Test Alarm", role: .destructive) {
+                    Task {
+                        let phoneResult = await classReminderScheduler.clearDebugAlarm()
+                        watchSyncManager.clearWatchTestReminder()
+                        transferMessage = "\(phoneResult)\nWatch test reminder clear requested."
+                    }
+                }
+
+                Button("Open App Settings") {
+                    classReminderScheduler.openAppSettings()
                 }
             }
 
@@ -176,18 +221,9 @@ struct SettingsView: View {
     }
 }
 
-private extension TimetableStoreSnapshot {
-    static let empty = TimetableStoreSnapshot(
-        updatedAt: .now,
-        subjects: [],
-        slots: [],
-        placements: [],
-        notificationSettings: [],
-        assignments: []
-    )
-}
-
 #Preview {
     SettingsView()
+        .environmentObject(ClassReminderScheduler())
+        .environmentObject(PhoneWatchSyncManager(modelContainer: try! ModelContainer(for: TimetableStore.self), activateSession: false))
         .modelContainer(for: [TimetableStore.self], inMemory: true)
 }
