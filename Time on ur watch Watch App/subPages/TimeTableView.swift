@@ -11,11 +11,66 @@ struct TimeTableView: View {
     @EnvironmentObject private var dataStore: WatchDataStore
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                if dataStore.hasTimetable {
-                    ForEach(dataStore.entries(for: dataStore.selectedDay)) { entry in
+        Group {
+            if dataStore.hasTimetable {
+                TabView(selection: selectedDayBinding) {
+                    ForEach(1...5, id: \.self) { day in
+                        dayPage(for: day)
+                            .tag(day)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+            } else {
+                GlassCard {
+                    VStack(spacing: 6) {
+                        Image(systemName: "calendar.badge.exclamationmark")
+                            .font(.title3)
+                        Text("No timetable yet")
+                            .font(.headline)
+                        Text("Add subjects on iPhone first.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            }
+        }
+        .navigationTitle(WatchDataStore.titleForDay(dataStore.selectedDay))
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if dataStore.selectedDay != WatchDataStore.currentTimetableDay() {
+                    Button {
+                        dataStore.refreshCurrentDay()
+                    } label: {
+                        Image(systemName: "arrow.counterclockwise")
+                    }
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    WatchDayPickerView()
+                } label: {
+                    Image(systemName: "calendar")
+                }
+            }
+        }
+    }
+
+    private var selectedDayBinding: Binding<Int> {
+        Binding(
+            get: { dataStore.selectedDay },
+            set: { dataStore.setSelectedDay($0) }
+        )
+    }
+
+    private func dayPage(for day: Int) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(dataStore.entries(for: day)) { entry in
                         timetableRow(entry)
+                            .id(entry.id)
                     }
 
                     VStack(spacing: 6) {
@@ -33,31 +88,40 @@ struct TimeTableView: View {
                     .padding(.horizontal)
                     .padding(.top, 4)
                     .padding(.bottom, 8)
-                } else {
-                    GlassCard {
-                        VStack(spacing: 6) {
-                            Image(systemName: "calendar.badge.exclamationmark")
-                                .font(.title3)
-                            Text("No timetable yet")
-                                .font(.headline)
-                            Text("Add subjects on iPhone first.")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                    }
                 }
+                .padding(.vertical, 6)
             }
-            .padding(.vertical, 6)
+            .onAppear {
+                scrollToRelevantEntryIfNeeded(day: day, proxy: proxy, animated: false)
+            }
+            .onChange(of: dataStore.selectedDay) { _, _ in
+                scrollToRelevantEntryIfNeeded(day: day, proxy: proxy)
+            }
+            .onChange(of: dataStore.snapshot.updatedAt) { _, _ in
+                scrollToRelevantEntryIfNeeded(day: day, proxy: proxy, animated: false)
+            }
         }
-        .navigationTitle(WatchDataStore.titleForDay(dataStore.selectedDay))
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    WatchDayPickerView()
-                } label: {
-                    Image(systemName: "calendar")
+    }
+
+    private func scrollToRelevantEntryIfNeeded(
+        day: Int,
+        proxy: ScrollViewProxy,
+        animated: Bool = true
+    ) {
+        guard day == dataStore.selectedDay,
+              day == WatchDataStore.currentTimetableDay(),
+              let targetID = dataStore.currentRelevantEntryID(for: day)
+        else {
+            return
+        }
+
+        DispatchQueue.main.async {
+            if animated {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    proxy.scrollTo(targetID, anchor: .center)
                 }
+            } else {
+                proxy.scrollTo(targetID, anchor: .center)
             }
         }
     }
@@ -72,12 +136,12 @@ struct TimeTableView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 HStack(spacing: 4) {
-                    Text(entry.slot.startTime)
+                    Text(entry.slot.formattedStartTime)
                         .font(.headline)
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
                     Text("-")
-                    Text(entry.slot.endTime)
+                    Text(entry.slot.formattedEndTime)
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)

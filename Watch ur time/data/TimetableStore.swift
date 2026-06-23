@@ -10,6 +10,13 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+enum TimeMeridiem: String, Codable, CaseIterable, Identifiable {
+    case am = "AM"
+    case pm = "PM"
+
+    var id: String { rawValue }
+}
+
 enum NotificationMoment: Int, Codable, CaseIterable, Identifiable {
     case classBegins
     case classEnds
@@ -91,16 +98,125 @@ struct TimetableSubject: Codable, Identifiable, Hashable {
 struct TimetableTimeSlot: Codable, Identifiable, Hashable {
     var id: UUID
     var startTime: String
+    var startMeridiem: TimeMeridiem
     var endTime: String
+    var endMeridiem: TimeMeridiem
 
-    init(id: UUID = UUID(), startTime: String, endTime: String) {
+    init(
+        id: UUID = UUID(),
+        startTime: String,
+        startMeridiem: TimeMeridiem = .am,
+        endTime: String,
+        endMeridiem: TimeMeridiem = .am
+    ) {
         self.id = id
         self.startTime = startTime
+        self.startMeridiem = startMeridiem
         self.endTime = endTime
+        self.endMeridiem = endMeridiem
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case startTime
+        case startMeridiem
+        case endTime
+        case endMeridiem
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        startTime = try container.decode(String.self, forKey: .startTime)
+        endTime = try container.decode(String.self, forKey: .endTime)
+        startMeridiem = try container.decodeIfPresent(TimeMeridiem.self, forKey: .startMeridiem)
+            ?? Self.inferredMeridiem(for: startTime)
+        endMeridiem = try container.decodeIfPresent(TimeMeridiem.self, forKey: .endMeridiem)
+            ?? Self.inferredMeridiem(for: endTime)
+    }
+
+    var formattedStartTime: String {
+        Self.displayString(time: startTime, meridiem: startMeridiem)
+    }
+
+    var formattedEndTime: String {
+        Self.displayString(time: endTime, meridiem: endMeridiem)
     }
 
     var displayLabel: String {
-        "\(startTime) - \(endTime)"
+        "\(formattedStartTime) - \(formattedEndTime)"
+    }
+
+    var startMinutesSinceMidnight: Int? {
+        Self.minutesSinceMidnight(time: startTime, meridiem: startMeridiem)
+    }
+
+    var endMinutesSinceMidnight: Int? {
+        Self.minutesSinceMidnight(time: endTime, meridiem: endMeridiem)
+    }
+
+    static func minutesSinceMidnight(time: String, meridiem: TimeMeridiem) -> Int? {
+        let trimmed = time.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let components = parseHourMinute(trimmed) {
+            let hour = components.hour
+            let minute = components.minute
+
+            guard minute >= 0, minute < 60 else {
+                return nil
+            }
+
+            if hour > 12 {
+                guard hour < 24 else {
+                    return nil
+                }
+                return hour * 60 + minute
+            }
+
+            guard hour >= 1, hour <= 12 else {
+                return nil
+            }
+
+            if hour == 12 {
+                return (meridiem == .am ? 0 : 12 * 60) + minute
+            }
+
+            return (meridiem == .pm ? hour + 12 : hour) * 60 + minute
+        }
+
+        return nil
+    }
+
+    private static func inferredMeridiem(for time: String) -> TimeMeridiem {
+        guard let components = parseHourMinute(time.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            return .am
+        }
+
+        return components.hour >= 12 ? .pm : .am
+    }
+
+    private static func displayString(time: String, meridiem: TimeMeridiem) -> String {
+        guard let minutes = minutesSinceMidnight(time: time, meridiem: meridiem) else {
+            return "\(time.trimmingCharacters(in: .whitespacesAndNewlines)) \(meridiem.rawValue)"
+        }
+
+        let hour24 = minutes / 60
+        let minute = minutes % 60
+        let normalizedMeridiem: TimeMeridiem = hour24 >= 12 ? .pm : .am
+        let hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12
+        return "\(hour12):" + String(format: "%02d", minute) + " \(normalizedMeridiem.rawValue)"
+    }
+
+    private static func parseHourMinute(_ time: String) -> (hour: Int, minute: Int)? {
+        let parts = time.split(separator: ":")
+        guard parts.count == 2,
+              let hour = Int(parts[0].trimmingCharacters(in: .whitespacesAndNewlines)),
+              let minute = Int(parts[1].trimmingCharacters(in: .whitespacesAndNewlines))
+        else {
+            return nil
+        }
+
+        return (hour, minute)
     }
 }
 
@@ -384,7 +500,7 @@ struct TimetableArchive: Codable {
     var store: TimetableStoreSnapshot
 
     init(
-        schemaVersion: Int = 1,
+        schemaVersion: Int = 2,
         exportedAt: Date = .now,
         store: TimetableStoreSnapshot
     ) {

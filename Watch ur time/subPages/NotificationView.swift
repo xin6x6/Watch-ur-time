@@ -28,8 +28,8 @@ struct NotificationView: View {
                                 GlassCardNotification(
                                     className: entry.subject.name,
                                     room: entry.subject.room,
-                                    startTime: entry.slot.startTime,
-                                    endTime: entry.slot.endTime,
+                                    startTime: entry.slot.formattedStartTime,
+                                    endTime: entry.slot.formattedEndTime,
                                     notificationTime: entry.notificationSummary
                                 )
                             }
@@ -223,12 +223,12 @@ private extension TimetableDayEntry {
 
         switch setting.moment {
         case .classBegins:
-            return "Notify \(notificationTime(from: slot.startTime, minutesBefore: setting.minutesBefore) ?? fallbackSummary(for: setting))"
+            return "Notify \(notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: setting.minutesBefore) ?? fallbackSummary(for: setting))"
         case .classEnds:
-            return "Notify \(notificationTime(from: slot.endTime, minutesBefore: setting.minutesBefore) ?? fallbackSummary(for: setting))"
+            return "Notify \(notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: setting.minutesBefore) ?? fallbackSummary(for: setting))"
         case .both:
-            let startText = notificationTime(from: slot.startTime, minutesBefore: setting.minutesBefore)
-            let endText = notificationTime(from: slot.endTime, minutesBefore: setting.minutesBefore)
+            let startText = notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: setting.minutesBefore)
+            let endText = notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: setting.minutesBefore)
 
             if let startText, let endText {
                 return "Notify \(startText) / \(endText)"
@@ -249,27 +249,16 @@ private extension TimetableDayEntry {
         }
     }
 
-    private func notificationTime(from source: String, minutesBefore: Int) -> String? {
-        let formatters = ["H:mm", "HH:mm"]
-        let calendar = Calendar.current
-
-        for format in formatters {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.dateFormat = format
-
-            guard let date = formatter.date(from: source) else {
-                continue
-            }
-
-            guard let adjusted = calendar.date(byAdding: .minute, value: -minutesBefore, to: date) else {
-                continue
-            }
-
-            formatter.dateFormat = "HH:mm"
-            return formatter.string(from: adjusted)
+    private func notificationTime(from source: String, meridiem: TimeMeridiem, minutesBefore: Int) -> String? {
+        guard let baseMinutes = TimetableTimeSlot.minutesSinceMidnight(time: source, meridiem: meridiem) else {
+            return nil
         }
 
-        return nil
+        let normalizedMinutes = (baseMinutes - minutesBefore + 1_440) % 1_440
+        let hour24 = normalizedMinutes / 60
+        let minute = normalizedMinutes % 60
+        let normalizedMeridiem: TimeMeridiem = hour24 >= 12 ? .pm : .am
+        let hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12
+        return "\(hour12):" + String(format: "%02d", minute) + " \(normalizedMeridiem.rawValue)"
     }
 }

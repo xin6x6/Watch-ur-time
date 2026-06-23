@@ -307,7 +307,7 @@ struct AddTimeTable: View {
                 Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
                     GridRow {
                         scheduleHeaderCell("Time")
-                            .frame(width: 170)
+                            .frame(width: 220)
 
                         ForEach(weekdayColumns) { column in
                             scheduleHeaderCell(column.title)
@@ -318,7 +318,7 @@ struct AddTimeTable: View {
                     ForEach(timeSlotDrafts.indices, id: \.self) { index in
                         GridRow {
                             timeSlotEditor(for: index)
-                                .frame(width: 170)
+                                .frame(width: 220)
 
                             ForEach(weekdayColumns) { column in
                                 scheduleCell(
@@ -372,12 +372,38 @@ struct AddTimeTable: View {
                     }
                 }
 
-                TextField("Start", text: $timeSlotDrafts[index].startTime)
-                    .keyboardType(.numbersAndPunctuation)
+                timeInputRow(
+                    title: "Start",
+                    text: $timeSlotDrafts[index].startTime,
+                    meridiem: $timeSlotDrafts[index].startMeridiem
+                )
 
-                TextField("End", text: $timeSlotDrafts[index].endTime)
-                    .keyboardType(.numbersAndPunctuation)
+                timeInputRow(
+                    title: "End",
+                    text: $timeSlotDrafts[index].endTime,
+                    meridiem: $timeSlotDrafts[index].endMeridiem
+                )
             }
+        }
+    }
+
+    private func timeInputRow(
+        title: String,
+        text: Binding<String>,
+        meridiem: Binding<TimeMeridiem>
+    ) -> some View {
+        HStack(spacing: 8) {
+            TextField(title, text: text)
+                .keyboardType(.numbersAndPunctuation)
+
+            Picker("\(title) meridiem", selection: meridiem) {
+                ForEach(TimeMeridiem.allCases) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .frame(width: 88)
         }
     }
 
@@ -577,7 +603,13 @@ struct AddTimeTable: View {
     private func saveTimetable() {
         let subjects = completedSubjects
         let slots = completedTimeSlots.map {
-            TimetableTimeSlot(id: $0.id, startTime: $0.startTime.trimmed, endTime: $0.endTime.trimmed)
+            TimetableTimeSlot(
+                id: $0.id,
+                startTime: $0.startTime.trimmed,
+                startMeridiem: $0.startMeridiem,
+                endTime: $0.endTime.trimmed,
+                endMeridiem: $0.endMeridiem
+            )
         }
 
         do {
@@ -701,18 +733,30 @@ private struct SubjectDraft: Identifiable {
 private struct TimeSlotDraft: Identifiable {
     var id: UUID
     var startTime: String
+    var startMeridiem: TimeMeridiem
     var endTime: String
+    var endMeridiem: TimeMeridiem
 
-    init(id: UUID = UUID(), startTime: String = "", endTime: String = "") {
+    init(
+        id: UUID = UUID(),
+        startTime: String = "",
+        startMeridiem: TimeMeridiem = .am,
+        endTime: String = "",
+        endMeridiem: TimeMeridiem = .am
+    ) {
         self.id = id
         self.startTime = startTime
+        self.startMeridiem = startMeridiem
         self.endTime = endTime
+        self.endMeridiem = endMeridiem
     }
 
     init(slot: TimetableTimeSlot) {
         self.id = slot.id
         self.startTime = slot.startTime
+        self.startMeridiem = slot.startMeridiem
         self.endTime = slot.endTime
+        self.endMeridiem = slot.endMeridiem
     }
 
     var isBlank: Bool {
