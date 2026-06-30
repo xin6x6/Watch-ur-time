@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Watch ur time white.png",
+      "filename" : "Watch ur time white.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "watch ur time black.png",
+      "filename" : "watch ur time black.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "watch ur time black 1.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

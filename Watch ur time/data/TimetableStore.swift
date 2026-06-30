@@ -77,6 +77,22 @@ enum NotificationDeliveryMode: Int, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum NotificationTimeMode: Int, Codable, CaseIterable, Identifiable {
+    case custom
+    case uniform
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .custom:
+            return "Custom"
+        case .uniform:
+            return "Uniform"
+        }
+    }
+}
+
 struct TimetableSubject: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
@@ -366,6 +382,8 @@ struct TimetableDayEntry: Identifiable, Hashable {
 final class TimetableStore {
     var updatedAt: Date = Date()
     var notificationDeliveryModeRawValue: Int = NotificationDeliveryMode.both.rawValue
+    var notificationTimeModeRawValue: Int = NotificationTimeMode.custom.rawValue
+    var uniformNotificationMinutesBefore: Int = 2
     private var subjectsPayload: Data = Data()
     private var slotsPayload: Data = Data()
     private var placementsPayload: Data = Data()
@@ -375,6 +393,8 @@ final class TimetableStore {
     init(
         updatedAt: Date = .now,
         notificationDeliveryMode: NotificationDeliveryMode = .both,
+        notificationTimeMode: NotificationTimeMode = .custom,
+        uniformNotificationMinutesBefore: Int = 2,
         subjects: [TimetableSubject] = [],
         slots: [TimetableTimeSlot] = [],
         placements: [TimetablePlacement] = [],
@@ -383,6 +403,8 @@ final class TimetableStore {
     ) {
         self.updatedAt = updatedAt
         self.notificationDeliveryModeRawValue = notificationDeliveryMode.rawValue
+        self.notificationTimeModeRawValue = notificationTimeMode.rawValue
+        self.uniformNotificationMinutesBefore = uniformNotificationMinutesBefore
         self.subjectsPayload = Self.encode(subjects)
         self.slotsPayload = Self.encode(slots)
         self.placementsPayload = Self.encode(placements)
@@ -394,6 +416,22 @@ final class TimetableStore {
         get { NotificationDeliveryMode(rawValue: notificationDeliveryModeRawValue) ?? .both }
         set {
             notificationDeliveryModeRawValue = newValue.rawValue
+            updatedAt = .now
+        }
+    }
+
+    var notificationTimeMode: NotificationTimeMode {
+        get { NotificationTimeMode(rawValue: notificationTimeModeRawValue) ?? .custom }
+        set {
+            notificationTimeModeRawValue = newValue.rawValue
+            updatedAt = .now
+        }
+    }
+
+    var clampedUniformNotificationMinutesBefore: Int {
+        get { min(max(uniformNotificationMinutesBefore, 0), 60) }
+        set {
+            uniformNotificationMinutesBefore = min(max(newValue, 0), 60)
             updatedAt = .now
         }
     }
@@ -552,7 +590,7 @@ struct TimetableArchive: Codable {
     var store: TimetableStoreSnapshot
 
     init(
-        schemaVersion: Int = 3,
+        schemaVersion: Int = 4,
         exportedAt: Date = .now,
         store: TimetableStoreSnapshot
     ) {
@@ -565,6 +603,8 @@ struct TimetableArchive: Codable {
 struct TimetableStoreSnapshot: Codable {
     var updatedAt: Date
     var notificationDeliveryMode: NotificationDeliveryMode
+    var notificationTimeMode: NotificationTimeMode
+    var uniformNotificationMinutesBefore: Int
     var subjects: [TimetableSubject]
     var slots: [TimetableTimeSlot]
     var placements: [TimetablePlacement]
@@ -574,6 +614,8 @@ struct TimetableStoreSnapshot: Codable {
     enum CodingKeys: String, CodingKey {
         case updatedAt
         case notificationDeliveryMode
+        case notificationTimeMode
+        case uniformNotificationMinutesBefore
         case subjects
         case slots
         case placements
@@ -584,6 +626,8 @@ struct TimetableStoreSnapshot: Codable {
     init(
         updatedAt: Date,
         notificationDeliveryMode: NotificationDeliveryMode,
+        notificationTimeMode: NotificationTimeMode,
+        uniformNotificationMinutesBefore: Int,
         subjects: [TimetableSubject],
         slots: [TimetableTimeSlot],
         placements: [TimetablePlacement],
@@ -592,6 +636,8 @@ struct TimetableStoreSnapshot: Codable {
     ) {
         self.updatedAt = updatedAt
         self.notificationDeliveryMode = notificationDeliveryMode
+        self.notificationTimeMode = notificationTimeMode
+        self.uniformNotificationMinutesBefore = min(max(uniformNotificationMinutesBefore, 0), 60)
         self.subjects = subjects
         self.slots = slots
         self.placements = placements
@@ -606,6 +652,14 @@ struct TimetableStoreSnapshot: Codable {
             NotificationDeliveryMode.self,
             forKey: .notificationDeliveryMode
         ) ?? .both
+        notificationTimeMode = try container.decodeIfPresent(
+            NotificationTimeMode.self,
+            forKey: .notificationTimeMode
+        ) ?? .custom
+        uniformNotificationMinutesBefore = min(
+            max(try container.decodeIfPresent(Int.self, forKey: .uniformNotificationMinutesBefore) ?? 2, 0),
+            60
+        )
         subjects = try container.decode([TimetableSubject].self, forKey: .subjects)
         slots = try container.decode([TimetableTimeSlot].self, forKey: .slots)
         placements = try container.decode([TimetablePlacement].self, forKey: .placements)
@@ -618,6 +672,8 @@ extension TimetableStoreSnapshot {
     static let empty = TimetableStoreSnapshot(
         updatedAt: .now,
         notificationDeliveryMode: .both,
+        notificationTimeMode: .custom,
+        uniformNotificationMinutesBefore: 2,
         subjects: [],
         slots: [],
         placements: [],
@@ -631,6 +687,8 @@ extension TimetableStore {
         TimetableStoreSnapshot(
             updatedAt: updatedAt,
             notificationDeliveryMode: notificationDeliveryMode,
+            notificationTimeMode: notificationTimeMode,
+            uniformNotificationMinutesBefore: clampedUniformNotificationMinutesBefore,
             subjects: subjects,
             slots: slots,
             placements: placements,
@@ -641,6 +699,8 @@ extension TimetableStore {
 
     func apply(snapshot: TimetableStoreSnapshot) {
         notificationDeliveryModeRawValue = snapshot.notificationDeliveryMode.rawValue
+        notificationTimeModeRawValue = snapshot.notificationTimeMode.rawValue
+        uniformNotificationMinutesBefore = min(max(snapshot.uniformNotificationMinutesBefore, 0), 60)
         subjectsPayload = Self.encode(snapshot.subjects)
         slotsPayload = Self.encode(snapshot.slots)
         placementsPayload = Self.encode(snapshot.placements)

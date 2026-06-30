@@ -30,7 +30,7 @@ struct NotificationView: View {
                                     room: entry.subject.room,
                                     startTime: entry.slot.formattedStartTime,
                                     endTime: entry.slot.formattedEndTime,
-                                    notificationTime: entry.notificationSummary
+                                    notificationTime: notificationSummary(for: entry)
                                 )
                             }
                         }
@@ -56,6 +56,13 @@ struct NotificationView: View {
 
     private var dayTitle: String {
         dayToString[day] ?? "Day"
+    }
+
+    private func notificationSummary(for entry: TimetableDayEntry) -> String {
+        entry.notificationSummary(
+            timeMode: store?.notificationTimeMode ?? .custom,
+            uniformMinutesBefore: store?.clampedUniformNotificationMinutesBefore ?? 2
+        )
     }
 
     private var emptyState: some View {
@@ -94,7 +101,11 @@ struct AdjustNotificationView: View {
             VStack(alignment: .leading, spacing: 28) {
                 headerSection
                 momentSection
-                advanceSection
+                if isUsingUniformTime {
+                    uniformInfoSection
+                } else {
+                    advanceSection
+                }
                 Spacer(minLength: 0)
             }
             .padding()
@@ -163,6 +174,16 @@ struct AdjustNotificationView: View {
         }
     }
 
+    private var uniformInfoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("In advance for")
+                .font(.headline)
+            Text("Using uniform reminder time from Settings: \(uniformAdvanceSummary)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private var errorBinding: Binding<Bool> {
         Binding(
             get: { errorMessage != nil },
@@ -172,6 +193,15 @@ struct AdjustNotificationView: View {
                 }
             }
         )
+    }
+
+    private var isUsingUniformTime: Bool {
+        stores.first?.notificationTimeMode == .uniform
+    }
+
+    private var uniformAdvanceSummary: String {
+        let minute = stores.first?.clampedUniformNotificationMinutesBefore ?? 2
+        return minute == 0 ? "On time" : "\(minute) mins"
     }
 
     private func loadSettingIfNeeded() {
@@ -218,34 +248,41 @@ private extension TimetableDayEntry {
         notificationSetting ?? TimetableNotificationSetting(placementID: placement.id)
     }
 
-    var notificationSummary: String {
+    func notificationSummary(
+        timeMode: NotificationTimeMode,
+        uniformMinutesBefore: Int
+    ) -> String {
         let setting = effectiveNotificationSetting
+        let minutesBefore = timeMode == .uniform ? uniformMinutesBefore : setting.minutesBefore
 
         switch setting.moment {
         case .classBegins:
-            return "Notify \(notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: setting.minutesBefore) ?? fallbackSummary(for: setting))"
+            return "Notify \(notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore) ?? fallbackSummary(for: setting, minutesBefore: minutesBefore))"
         case .classEnds:
-            return "Notify \(notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: setting.minutesBefore) ?? fallbackSummary(for: setting))"
+            return "Notify \(notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: minutesBefore) ?? fallbackSummary(for: setting, minutesBefore: minutesBefore))"
         case .both:
-            let startText = notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: setting.minutesBefore)
-            let endText = notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: setting.minutesBefore)
+            let startText = notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore)
+            let endText = notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: minutesBefore)
 
             if let startText, let endText {
                 return "Notify \(startText) / \(endText)"
             }
 
-            return "Notify \(fallbackSummary(for: setting))"
+            return "Notify \(fallbackSummary(for: setting, minutesBefore: minutesBefore))"
         }
     }
 
-    private func fallbackSummary(for setting: TimetableNotificationSetting) -> String {
+    private func fallbackSummary(
+        for setting: TimetableNotificationSetting,
+        minutesBefore: Int
+    ) -> String {
         switch setting.moment {
         case .classBegins:
-            return "\(setting.minutesBefore) mins before start"
+            return "\(minutesBefore) mins before start"
         case .classEnds:
-            return "\(setting.minutesBefore) mins before end"
+            return "\(minutesBefore) mins before end"
         case .both:
-            return "\(setting.minutesBefore) mins before start & end"
+            return "\(minutesBefore) mins before start & end"
         }
     }
 

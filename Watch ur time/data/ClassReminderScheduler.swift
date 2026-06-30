@@ -361,12 +361,16 @@ final class ClassReminderScheduler: ObservableObject {
             let slot = snapshot.slots[placement.slotIndex]
             let setting = notificationSettingsByPlacementID[placement.id]
                 ?? TimetableNotificationSetting(placementID: placement.id)
+            let minutesBefore = snapshot.notificationTimeMode == .uniform
+                ? snapshot.uniformNotificationMinutesBefore
+                : setting.minutesBefore
 
             return events(
                 for: placement,
                 slot: slot,
                 subject: subject,
-                setting: setting
+                setting: setting,
+                minutesBefore: minutesBefore
             )
         }
     }
@@ -375,7 +379,8 @@ final class ClassReminderScheduler: ObservableObject {
         for placement: TimetablePlacement,
         slot: TimetableTimeSlot,
         subject: TimetableSubject,
-        setting: TimetableNotificationSetting
+        setting: TimetableNotificationSetting,
+        minutesBefore: Int
     ) -> [ScheduledClassReminder] {
         var reminders: [ScheduledClassReminder] = []
 
@@ -386,7 +391,7 @@ final class ClassReminderScheduler: ObservableObject {
                 placement: placement,
                 slot: slot,
                 subject: subject,
-                minutesBefore: setting.minutesBefore
+                minutesBefore: minutesBefore
             ) {
                 reminders.append(reminder)
             }
@@ -396,7 +401,7 @@ final class ClassReminderScheduler: ObservableObject {
                 placement: placement,
                 slot: slot,
                 subject: subject,
-                minutesBefore: setting.minutesBefore
+                minutesBefore: minutesBefore
             ) {
                 reminders.append(reminder)
             }
@@ -406,7 +411,7 @@ final class ClassReminderScheduler: ObservableObject {
                 placement: placement,
                 slot: slot,
                 subject: subject,
-                minutesBefore: setting.minutesBefore
+                minutesBefore: minutesBefore
             ) {
                 reminders.append(startReminder)
             }
@@ -416,7 +421,7 @@ final class ClassReminderScheduler: ObservableObject {
                 placement: placement,
                 slot: slot,
                 subject: subject,
-                minutesBefore: setting.minutesBefore
+                minutesBefore: minutesBefore
             ) {
                 reminders.append(endReminder)
             }

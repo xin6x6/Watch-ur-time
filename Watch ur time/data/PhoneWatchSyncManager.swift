@@ -102,6 +102,8 @@ final class PhoneWatchSyncManager: NSObject, ObservableObject {
         primaryStore()?.snapshot ?? TimetableStoreSnapshot(
             updatedAt: .now,
             notificationDeliveryMode: .both,
+            notificationTimeMode: .custom,
+            uniformNotificationMinutesBefore: 2,
             subjects: [],
             slots: [],
             placements: [],

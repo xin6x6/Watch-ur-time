@@ -129,12 +129,16 @@ final class WatchClassReminderScheduler {
                     moment: .classEnds,
                     minutesBefore: 2
                 )
+            let minutesBefore = snapshot.notificationTimeMode == .uniform
+                ? snapshot.uniformNotificationMinutesBefore
+                : setting.minutesBefore
 
             return reminders(
                 for: placement,
                 slot: slot,
                 subject: subject,
-                setting: setting
+                setting: setting,
+                minutesBefore: minutesBefore
             )
         }
     }
@@ -143,7 +147,8 @@ final class WatchClassReminderScheduler {
         for placement: WatchTimetablePlacement,
         slot: WatchTimetableTimeSlot,
         subject: WatchTimetableSubject,
-        setting: WatchTimetableNotificationSetting
+        setting: WatchTimetableNotificationSetting,
+        minutesBefore: Int
     ) -> [WatchScheduledClassReminder] {
         switch setting.moment {
         case .classBegins:
@@ -152,7 +157,7 @@ final class WatchClassReminderScheduler {
                 placement: placement,
                 slot: slot,
                 subject: subject,
-                minutesBefore: setting.minutesBefore
+                minutesBefore: minutesBefore
             )].compactMap { $0 }
         case .classEnds:
             return [makeReminder(
@@ -160,7 +165,7 @@ final class WatchClassReminderScheduler {
                 placement: placement,
                 slot: slot,
                 subject: subject,
-                minutesBefore: setting.minutesBefore
+                minutesBefore: minutesBefore
             )].compactMap { $0 }
         case .both:
             return [
@@ -169,14 +174,14 @@ final class WatchClassReminderScheduler {
                     placement: placement,
                     slot: slot,
                     subject: subject,
-                    minutesBefore: setting.minutesBefore
+                    minutesBefore: minutesBefore
                 ),
                 makeReminder(
                     eventKind: .end,
                     placement: placement,
                     slot: slot,
                     subject: subject,
-                    minutesBefore: setting.minutesBefore
+                    minutesBefore: minutesBefore
                 )
             ].compactMap { $0 }
         }
