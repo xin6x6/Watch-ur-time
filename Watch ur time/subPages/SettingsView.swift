@@ -21,6 +21,7 @@ struct SettingsView: View {
     @EnvironmentObject private var classReminderScheduler: ClassReminderScheduler
     @EnvironmentObject private var watchSyncManager: PhoneWatchSyncManager
     @AppStorage("theme") private var themes: Themes = .System
+    @AppStorage("debug_unlocked") private var isDebugUnlocked = false
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
     @State private var isExporting = false
@@ -28,6 +29,7 @@ struct SettingsView: View {
     @State private var transferDocument = TimetableTransferDocument()
     @State private var transferFilename = "Timetable"
     @State private var transferMessage: String?
+    @State private var debugUnlockInput = ""
 
     var body: some View {
         Form {
@@ -37,6 +39,15 @@ struct SettingsView: View {
                     Text("Lights On!").tag(Themes.Light)
                     Text("Lights Off!").tag(Themes.Dark)
                 }
+            }
+
+            Section("Notification") {
+                Picker("Notify By", selection: notificationDeliveryModeBinding) {
+                    ForEach(NotificationDeliveryMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
             }
 
             Section("Do Something") {
@@ -49,46 +60,58 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Debug") {
-                HStack {
-                    Text("Alarm Permission")
-                    Spacer()
-                    Text(classReminderScheduler.alarmAuthorizationDebugText())
-                        .foregroundStyle(.secondary)
-                }
+            if isDebugUnlocked {
+                Section("Debug") {
+                    HStack {
+                        Text("Alarm Permission")
+                        Spacer()
+                        Text(classReminderScheduler.alarmAuthorizationDebugText())
+                            .foregroundStyle(.secondary)
+                    }
 
-                Button("Request Alarm Permission") {
-                    Task {
-                        transferMessage = await classReminderScheduler.requestAlarmAuthorizationDebug()
+                    Button("Request Alarm Permission") {
+                        Task {
+                            transferMessage = await classReminderScheduler.requestAlarmAuthorizationDebug()
+                        }
+                    }
+
+                    Button("Show Alarm Auth Status") {
+                        transferMessage = classReminderScheduler.dumpAlarmAuthorizationDebug()
+                    }
+
+                    Button("Show Alarm Runtime Details") {
+                        transferMessage = classReminderScheduler.alarmRuntimeDiagnosticReport()
+                    }
+
+                    Button("Schedule Test Alarm In 1 Min") {
+                        Task {
+                            let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
+                            watchSyncManager.scheduleWatchTestReminder()
+                            transferMessage = "\(phoneResult)\nWatch test reminder requested."
+                        }
+                    }
+
+                    Button("Clear Test Alarm", role: .destructive) {
+                        Task {
+                            let phoneResult = await classReminderScheduler.clearDebugAlarm()
+                            watchSyncManager.clearWatchTestReminder()
+                            transferMessage = "\(phoneResult)\nWatch test reminder clear requested."
+                        }
+                    }
+
+                    Button("Open App Settings") {
+                        classReminderScheduler.openAppSettings()
                     }
                 }
+            } else {
+                Section("Who Are You!") {
+                    TextField("Say something", text: $debugUnlockInput)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
 
-                Button("Show Alarm Auth Status") {
-                    transferMessage = classReminderScheduler.dumpAlarmAuthorizationDebug()
-                }
-
-                Button("Show Alarm Runtime Details") {
-                    transferMessage = classReminderScheduler.alarmRuntimeDiagnosticReport()
-                }
-
-                Button("Schedule Test Alarm In 1 Min") {
-                    Task {
-                        let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
-                        watchSyncManager.scheduleWatchTestReminder()
-                        transferMessage = "\(phoneResult)\nWatch test reminder requested."
+                    Button("Submit") {
+                        unlockDebugIfNeeded()
                     }
-                }
-
-                Button("Clear Test Alarm", role: .destructive) {
-                    Task {
-                        let phoneResult = await classReminderScheduler.clearDebugAlarm()
-                        watchSyncManager.clearWatchTestReminder()
-                        transferMessage = "\(phoneResult)\nWatch test reminder clear requested."
-                    }
-                }
-
-                Button("Open App Settings") {
-                    classReminderScheduler.openAppSettings()
                 }
             }
 
@@ -206,18 +229,57 @@ struct SettingsView: View {
         }
 
         targetStore.apply(snapshot: archive.store)
+        archive.store.notificationDeliveryMode.persistToDefaults()
 
         for duplicate in stores.dropFirst() {
             modelContext.delete(duplicate)
         }
 
         try modelContext.save()
+        watchSyncManager.pushLatestSnapshotIfPossible()
+        Task {
+            await classReminderScheduler.sync(with: targetStore.snapshot)
+        }
     }
 
     private var exportDateStamp: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: .now)
+    }
+
+    private var notificationDeliveryModeBinding: Binding<NotificationDeliveryMode> {
+        Binding(
+            get: {
+                stores.first?.notificationDeliveryMode ?? NotificationDeliveryMode.loadFromDefaults()
+            },
+            set: { newValue in
+                let targetStore = stores.first ?? TimetableStore()
+
+                if stores.isEmpty {
+                    modelContext.insert(targetStore)
+                }
+
+                targetStore.notificationDeliveryMode = newValue
+                newValue.persistToDefaults()
+                try? modelContext.save()
+                watchSyncManager.pushLatestSnapshotIfPossible()
+
+                Task {
+                    await classReminderScheduler.sync(with: targetStore.snapshot)
+                }
+            }
+        )
+    }
+
+    private func unlockDebugIfNeeded() {
+        guard debugUnlockInput.trimmingCharacters(in: .whitespacesAndNewlines) == "iamng1nx" else {
+            transferMessage = "Wrong answer."
+            return
+        }
+
+        isDebugUnlocked = true
+        debugUnlockInput = ""
     }
 }
 

@@ -36,6 +36,47 @@ enum NotificationMoment: Int, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum NotificationDeliveryMode: Int, Codable, CaseIterable, Identifiable {
+    case bannerOnly
+    case alarmOnly
+    case both
+    case none
+
+    static let defaultsKey = "notification_delivery_mode"
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .bannerOnly:
+            return "Banner Only"
+        case .alarmOnly:
+            return "Alarm Only"
+        case .both:
+            return "Both"
+        case .none:
+            return "None"
+        }
+    }
+
+    var allowsBanner: Bool {
+        self == .bannerOnly || self == .both
+    }
+
+    var allowsAlarm: Bool {
+        self == .alarmOnly || self == .both
+    }
+
+    static func loadFromDefaults() -> NotificationDeliveryMode {
+        let rawValue = UserDefaults.standard.integer(forKey: defaultsKey)
+        return NotificationDeliveryMode(rawValue: rawValue) ?? .both
+    }
+
+    func persistToDefaults() {
+        UserDefaults.standard.set(rawValue, forKey: Self.defaultsKey)
+    }
+}
+
 struct TimetableSubject: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
@@ -324,6 +365,7 @@ struct TimetableDayEntry: Identifiable, Hashable {
 @Model
 final class TimetableStore {
     var updatedAt: Date = Date()
+    var notificationDeliveryModeRawValue: Int = NotificationDeliveryMode.both.rawValue
     private var subjectsPayload: Data = Data()
     private var slotsPayload: Data = Data()
     private var placementsPayload: Data = Data()
@@ -332,6 +374,7 @@ final class TimetableStore {
 
     init(
         updatedAt: Date = .now,
+        notificationDeliveryMode: NotificationDeliveryMode = .both,
         subjects: [TimetableSubject] = [],
         slots: [TimetableTimeSlot] = [],
         placements: [TimetablePlacement] = [],
@@ -339,11 +382,20 @@ final class TimetableStore {
         assignments: [TimetableAssignment] = []
     ) {
         self.updatedAt = updatedAt
+        self.notificationDeliveryModeRawValue = notificationDeliveryMode.rawValue
         self.subjectsPayload = Self.encode(subjects)
         self.slotsPayload = Self.encode(slots)
         self.placementsPayload = Self.encode(placements)
         self.notificationSettingsPayload = Self.encode(notificationSettings)
         self.assignmentsPayload = Self.encode(assignments)
+    }
+
+    var notificationDeliveryMode: NotificationDeliveryMode {
+        get { NotificationDeliveryMode(rawValue: notificationDeliveryModeRawValue) ?? .both }
+        set {
+            notificationDeliveryModeRawValue = newValue.rawValue
+            updatedAt = .now
+        }
     }
 
     var subjects: [TimetableSubject] {
@@ -500,7 +552,7 @@ struct TimetableArchive: Codable {
     var store: TimetableStoreSnapshot
 
     init(
-        schemaVersion: Int = 2,
+        schemaVersion: Int = 3,
         exportedAt: Date = .now,
         store: TimetableStoreSnapshot
     ) {
@@ -512,16 +564,60 @@ struct TimetableArchive: Codable {
 
 struct TimetableStoreSnapshot: Codable {
     var updatedAt: Date
+    var notificationDeliveryMode: NotificationDeliveryMode
     var subjects: [TimetableSubject]
     var slots: [TimetableTimeSlot]
     var placements: [TimetablePlacement]
     var notificationSettings: [TimetableNotificationSetting]
     var assignments: [TimetableAssignment]
+
+    enum CodingKeys: String, CodingKey {
+        case updatedAt
+        case notificationDeliveryMode
+        case subjects
+        case slots
+        case placements
+        case notificationSettings
+        case assignments
+    }
+
+    init(
+        updatedAt: Date,
+        notificationDeliveryMode: NotificationDeliveryMode,
+        subjects: [TimetableSubject],
+        slots: [TimetableTimeSlot],
+        placements: [TimetablePlacement],
+        notificationSettings: [TimetableNotificationSetting],
+        assignments: [TimetableAssignment]
+    ) {
+        self.updatedAt = updatedAt
+        self.notificationDeliveryMode = notificationDeliveryMode
+        self.subjects = subjects
+        self.slots = slots
+        self.placements = placements
+        self.notificationSettings = notificationSettings
+        self.assignments = assignments
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        notificationDeliveryMode = try container.decodeIfPresent(
+            NotificationDeliveryMode.self,
+            forKey: .notificationDeliveryMode
+        ) ?? .both
+        subjects = try container.decode([TimetableSubject].self, forKey: .subjects)
+        slots = try container.decode([TimetableTimeSlot].self, forKey: .slots)
+        placements = try container.decode([TimetablePlacement].self, forKey: .placements)
+        notificationSettings = try container.decode([TimetableNotificationSetting].self, forKey: .notificationSettings)
+        assignments = try container.decode([TimetableAssignment].self, forKey: .assignments)
+    }
 }
 
 extension TimetableStoreSnapshot {
     static let empty = TimetableStoreSnapshot(
         updatedAt: .now,
+        notificationDeliveryMode: .both,
         subjects: [],
         slots: [],
         placements: [],
@@ -534,6 +630,7 @@ extension TimetableStore {
     var snapshot: TimetableStoreSnapshot {
         TimetableStoreSnapshot(
             updatedAt: updatedAt,
+            notificationDeliveryMode: notificationDeliveryMode,
             subjects: subjects,
             slots: slots,
             placements: placements,
@@ -543,6 +640,7 @@ extension TimetableStore {
     }
 
     func apply(snapshot: TimetableStoreSnapshot) {
+        notificationDeliveryModeRawValue = snapshot.notificationDeliveryMode.rawValue
         subjectsPayload = Self.encode(snapshot.subjects)
         slotsPayload = Self.encode(snapshot.slots)
         placementsPayload = Self.encode(snapshot.placements)

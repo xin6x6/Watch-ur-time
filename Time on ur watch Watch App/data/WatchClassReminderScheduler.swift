@@ -16,6 +16,13 @@ final class WatchClassReminderScheduler {
     private let debugNotificationIdentifier = "watch-debug-class-reminder"
 
     func sync(with snapshot: WatchTimetableStoreSnapshot) async {
+        guard snapshot.notificationDeliveryMode.allowsBanner else {
+            let existingIDs = Set(defaults.stringArray(forKey: scheduledNotificationKey) ?? [])
+            notificationCenter.removePendingNotificationRequests(withIdentifiers: Array(existingIDs))
+            defaults.set([], forKey: scheduledNotificationKey)
+            return
+        }
+
         let reminders = desiredReminders(for: snapshot)
         let existingIDs = Set(defaults.stringArray(forKey: scheduledNotificationKey) ?? [])
         let desiredIDs = Set(reminders.map(\.identifier))

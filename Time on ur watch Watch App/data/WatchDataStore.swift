@@ -40,6 +40,17 @@ enum WatchNotificationMoment: Int, Codable, CaseIterable, Identifiable {
     var id: Int { rawValue }
 }
 
+enum WatchNotificationDeliveryMode: Int, Codable {
+    case bannerOnly
+    case alarmOnly
+    case both
+    case none
+
+    var allowsBanner: Bool {
+        self == .bannerOnly || self == .both
+    }
+}
+
 struct WatchTimetableSubject: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
@@ -188,14 +199,58 @@ struct WatchTimetableAssignment: Codable, Identifiable, Hashable {
 
 struct WatchTimetableStoreSnapshot: Codable {
     var updatedAt: Date
+    var notificationDeliveryMode: WatchNotificationDeliveryMode
     var subjects: [WatchTimetableSubject]
     var slots: [WatchTimetableTimeSlot]
     var placements: [WatchTimetablePlacement]
     var notificationSettings: [WatchTimetableNotificationSetting]
     var assignments: [WatchTimetableAssignment]
 
+    enum CodingKeys: String, CodingKey {
+        case updatedAt
+        case notificationDeliveryMode
+        case subjects
+        case slots
+        case placements
+        case notificationSettings
+        case assignments
+    }
+
+    init(
+        updatedAt: Date,
+        notificationDeliveryMode: WatchNotificationDeliveryMode,
+        subjects: [WatchTimetableSubject],
+        slots: [WatchTimetableTimeSlot],
+        placements: [WatchTimetablePlacement],
+        notificationSettings: [WatchTimetableNotificationSetting],
+        assignments: [WatchTimetableAssignment]
+    ) {
+        self.updatedAt = updatedAt
+        self.notificationDeliveryMode = notificationDeliveryMode
+        self.subjects = subjects
+        self.slots = slots
+        self.placements = placements
+        self.notificationSettings = notificationSettings
+        self.assignments = assignments
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        notificationDeliveryMode = try container.decodeIfPresent(
+            WatchNotificationDeliveryMode.self,
+            forKey: .notificationDeliveryMode
+        ) ?? .both
+        subjects = try container.decode([WatchTimetableSubject].self, forKey: .subjects)
+        slots = try container.decode([WatchTimetableTimeSlot].self, forKey: .slots)
+        placements = try container.decode([WatchTimetablePlacement].self, forKey: .placements)
+        notificationSettings = try container.decode([WatchTimetableNotificationSetting].self, forKey: .notificationSettings)
+        assignments = try container.decode([WatchTimetableAssignment].self, forKey: .assignments)
+    }
+
     static let empty = WatchTimetableStoreSnapshot(
         updatedAt: .now,
+        notificationDeliveryMode: .both,
         subjects: [],
         slots: [],
         placements: [],

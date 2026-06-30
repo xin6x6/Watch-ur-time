@@ -24,11 +24,16 @@ final class ClassReminderScheduler: ObservableObject {
 
     func sync(with snapshot: TimetableStoreSnapshot) async {
         let reminders = desiredReminders(for: snapshot)
+        snapshot.notificationDeliveryMode.persistToDefaults()
 
-        await syncPhoneNotifications(reminders)
+        await syncPhoneNotifications(
+            snapshot.notificationDeliveryMode.allowsBanner ? reminders : []
+        )
 
         if #available(iOS 26.0, *) {
-            await syncAlarmKit(reminders)
+            await syncAlarmKit(
+                snapshot.notificationDeliveryMode.allowsAlarm ? reminders : []
+            )
         }
     }
 
@@ -103,6 +108,18 @@ final class ClassReminderScheduler: ObservableObject {
         } catch {
             return "Alarm permission request failed: \(error.localizedDescription) (before: \(before))"
         }
+    }
+
+    func requestAlarmAuthorizationIfNeededOnLaunch() async {
+        guard #available(iOS 26.0, *) else {
+            return
+        }
+
+        guard AlarmManager.shared.authorizationState == .notDetermined else {
+            return
+        }
+
+        _ = try? await AlarmManager.shared.requestAuthorization()
     }
 
     func dumpAlarmAuthorizationDebug() -> String {

@@ -24,8 +24,10 @@ struct Watch_ur_timeApp: App {
         if let currentStore = try? container.mainContext.fetch(
             FetchDescriptor<TimetableStore>(sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
         ).first {
+            currentStore.notificationDeliveryMode.persistToDefaults()
             WidgetSnapshotStore.shared.update(with: currentStore.snapshot)
         } else {
+            NotificationDeliveryMode.both.persistToDefaults()
             WidgetSnapshotStore.shared.update(with: .empty)
         }
     }

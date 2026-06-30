@@ -48,6 +48,7 @@ struct TabNavigationView: View {
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
     @State private var tabSelection: AppTab = .timetable
     @State private var day: Int = Self.currentTimetableDay()
+    @State private var hasRequestedLaunchAlarmPermission = false
     
     var body: some View {
         TabView(selection: $tabSelection) {
@@ -70,11 +71,13 @@ struct TabNavigationView: View {
         .onAppear {
             syncDayWithCurrentWeekday()
             syncSharedOutputs()
+            requestLaunchAlarmPermissionIfNeeded()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 syncDayWithCurrentWeekday()
                 syncSharedOutputs()
+                requestLaunchAlarmPermissionIfNeeded()
             }
         }
         .onChange(of: stores.first?.updatedAt) { _, _ in
@@ -93,6 +96,18 @@ struct TabNavigationView: View {
 
         Task {
             await classReminderScheduler.sync(with: snapshot)
+        }
+    }
+
+    private func requestLaunchAlarmPermissionIfNeeded() {
+        guard !hasRequestedLaunchAlarmPermission else {
+            return
+        }
+
+        hasRequestedLaunchAlarmPermission = true
+
+        Task {
+            await classReminderScheduler.requestAlarmAuthorizationIfNeededOnLaunch()
         }
     }
 

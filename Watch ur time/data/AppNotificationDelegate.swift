@@ -22,6 +22,11 @@ final class AppNotificationDelegate: NSObject, UIApplicationDelegate, UNUserNoti
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        let mode = NotificationDeliveryMode.loadFromDefaults()
+        guard mode.allowsBanner else {
+            return []
+        }
+
+        return [.banner, .list, .sound]
     }
 }
