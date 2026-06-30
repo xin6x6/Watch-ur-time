@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.Ng1nx.Watch-ur-time.shared</string>
+		<string>group.xin.watchurtime.shared</string>
 	</array>
 </dict>
 </plist>

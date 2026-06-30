@@ -112,7 +112,7 @@ final class ClassReminderScheduler: ObservableObject {
     func alarmRuntimeDiagnosticReport() -> String {
         let usageDescription = Bundle.main.object(forInfoDictionaryKey: "NSAlarmKitUsageDescription") as? String
         let liveActivitiesFlag = Bundle.main.object(forInfoDictionaryKey: "NSSupportsLiveActivities") as? Bool
-        let widgetBundleIdentifier = "com.Ng1nx.Watch-ur-time.widget"
+        let widgetBundleIdentifier = "com.xin.Watch-ur-time.widget"
         let widgetPluginURL = Bundle.main.builtInPlugInsURL?.appendingPathComponent("Watch ur time Widget.appex")
         let widgetExists = widgetPluginURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
         let sharedDefaults = UserDefaults(suiteName: WidgetSharedContainer.appGroupID)

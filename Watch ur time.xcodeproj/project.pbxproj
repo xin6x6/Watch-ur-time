@@ -669,7 +669,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -733,7 +733,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -764,7 +764,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Watch ur time/Watch ur timeRelease.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Watch ur time/Info.plist";
@@ -774,7 +774,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = "Dev 0.67";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -795,7 +795,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Watch ur time/Watch ur timeRelease.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Watch ur time/Info.plist";
@@ -805,7 +805,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = "Dev 0.67";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -823,11 +823,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-timeTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-timeTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -845,11 +845,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-timeTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-timeTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -866,10 +866,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-timeUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-timeUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -886,10 +886,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-timeUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-timeUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -908,18 +908,18 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Time on ur watch";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.Ng1nx.Watch-ur-time";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.xin.Watch-ur-time";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -941,18 +941,18 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Time on ur watch";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.Ng1nx.Watch-ur-time";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.xin.Watch-ur-time";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -973,10 +973,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Time-on-ur-watch-Watch-AppTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Time-on-ur-watch-Watch-AppTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -996,10 +996,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Time-on-ur-watch-Watch-AppTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Time-on-ur-watch-Watch-AppTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -1018,10 +1018,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Time-on-ur-watch-Watch-AppUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Time-on-ur-watch-Watch-AppUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -1040,10 +1040,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Time-on-ur-watch-Watch-AppUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Time-on-ur-watch-Watch-AppUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -1064,7 +1064,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Watch ur time Widget/Watch_ur_time_Widget.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Watch ur time Widget/Info.plist";
@@ -1075,7 +1075,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = "Dev 0.67";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time.widget";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1096,7 +1096,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Watch ur time Widget/Watch_ur_time_Widget.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = J2L979PXTP;
+				DEVELOPMENT_TEAM = F28QZ6UYXC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Watch ur time Widget/Info.plist";
@@ -1107,7 +1107,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = "Dev 0.67";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Ng1nx.Watch-ur-time.widget";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
