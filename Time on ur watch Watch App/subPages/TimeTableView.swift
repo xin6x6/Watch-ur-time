@@ -84,7 +84,7 @@ struct TimeTableView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .compatibleGlassSurface(cornerRadius: 24)
                     .padding(.horizontal)
                     .padding(.top, 4)
                     .padding(.bottom, 8)
@@ -162,11 +162,7 @@ struct TimeTableView: View {
         .frame(maxWidth: .infinity)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(
-            entry.subject.color.opacity(0.26),
-            in: RoundedRectangle(cornerRadius: 30, style: .continuous)
-        )
-        .glassEffect(in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .compatibleGlassSurface(cornerRadius: 30, tint: entry.subject.color)
         .overlay {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .stroke(entry.subject.color.opacity(0.5), lineWidth: 1)

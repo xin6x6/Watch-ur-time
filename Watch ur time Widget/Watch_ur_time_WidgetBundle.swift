@@ -10,8 +10,12 @@ import WidgetKit
 
 @main
 struct Watch_ur_time_WidgetBundle: WidgetBundle {
+    @WidgetBundleBuilder
     var body: some Widget {
         CurrentClassWidget()
-        ClassAlarmLiveActivity()
+
+        if #available(iOSApplicationExtension 26.0, *) {
+            ClassAlarmLiveActivity()
+        }
     }
 }

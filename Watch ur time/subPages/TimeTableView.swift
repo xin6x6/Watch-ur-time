@@ -235,7 +235,7 @@ struct AddTimeTable: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                 }
-                .buttonStyle(.glassProminent)
+                .compatibleProminentGlassButtonStyle()
                 .padding(.horizontal)
                 .padding(.top, 12)
             }

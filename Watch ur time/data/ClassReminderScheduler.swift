@@ -155,6 +155,7 @@ final class ClassReminderScheduler: ObservableObject {
         UIApplication.shared.open(url)
     }
 
+    @available(iOS 26.0, *)
     private func alarmAuthorizationText(for state: AlarmManager.AuthorizationState) -> String {
         switch state {
         case .authorized:
