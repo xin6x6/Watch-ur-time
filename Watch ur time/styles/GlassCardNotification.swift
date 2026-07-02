@@ -20,23 +20,23 @@ struct GlassCardNotification: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(className)
-                            .font(.system(size: 20, weight: .bold))
+                            .appFont(size: 20, weight: .bold)
                         Text(room)
-                            .font(.system(size: 14, weight: .medium))
+                            .appFont(size: 14, weight: .medium)
                             .foregroundStyle(.secondary)
                     }
 
                     Spacer()
 
                     Text("\(startTime) - \(endTime)")
-                        .font(.system(size: 16, weight: .bold))
+                        .appFont(size: 16, weight: .bold)
                 }
 
                 HStack(spacing: 6) {
                     Image(systemName: "bell.badge")
-                        .font(.system(size: 14, weight: .semibold))
+                        .appFont(size: 14, weight: .semibold)
                     Text(notificationTime)
-                        .font(.system(size: 14, weight: .semibold))
+                        .appFont(size: 14, weight: .semibold)
                 }
                 .foregroundStyle(.secondary)
             }

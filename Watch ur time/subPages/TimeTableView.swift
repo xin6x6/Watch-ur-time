@@ -53,7 +53,7 @@ struct TimeTableView: View {
                         }
                     } label: {
                         Image(systemName: "plus")
-                            .font(.title3.weight(.semibold))
+                            .appFont(.title3, weight: .semibold)
                     }
                 }
             }
@@ -61,6 +61,7 @@ struct TimeTableView: View {
                 AddTimeTable()
             }
         }
+        .appDefaultFont()
         .tint(.primary)
     }
 
@@ -99,12 +100,12 @@ struct DayView: View {
         } else {
             VStack(spacing: 12) {
                 Image(systemName: "calendar.badge.exclamationmark")
-                    .font(.system(size: 42))
+                    .appFont(size: 42)
                     .foregroundStyle(.secondary)
                 Text("No timetable yet")
-                    .font(.headline)
+                    .appFont(.headline)
                 Text("Tap the plus button to create your timetable.")
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }
@@ -166,12 +167,12 @@ struct DayView: View {
                 .shadow(radius: 10)
             VStack(spacing: isHeader ? 0 : 6) {
                 Text(text)
-                    .font(isHeader ? .headline : .subheadline.weight(.bold))
+                    .appFont(isHeader ? .headline : .subheadline, weight: isHeader ? nil : .bold)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                 if let subtitle, !isHeader {
                     Text(subtitle)
-                        .font(.caption2)
+                        .appFont(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -209,6 +210,7 @@ struct AddTimeTable: View {
         .navigationTitle(step.title)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
+        .appDefaultFont()
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -232,7 +234,7 @@ struct AddTimeTable: View {
                     persistSubjectsAndContinue()
                 } label: {
                     Text("Next")
-                        .font(.headline)
+                        .appFont(.headline)
                         .foregroundStyle(colorScheme == .dark ? Color.black : Color.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -257,7 +259,7 @@ struct AddTimeTable: View {
     private var subjectEntrySection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Create your subjects first. Each subject needs a name, a room, and a color.")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
 
             ForEach(subjectDrafts.indices, id: \.self) { index in
@@ -265,7 +267,7 @@ struct AddTimeTable: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Text("Subject \(index + 1)")
-                                .font(.headline)
+                                .appFont(.headline)
                             Spacer()
                             if subjectDrafts.count > 1 {
                                 Button(role: .destructive) {
@@ -291,7 +293,7 @@ struct AddTimeTable: View {
                 subjectDrafts.append(SubjectDraft())
             } label: {
                 Label("Add Subject", systemImage: "plus.circle.fill")
-                    .font(.headline)
+                    .appFont(.headline)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
@@ -302,7 +304,7 @@ struct AddTimeTable: View {
     private var scheduleEntrySection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Add each class period first, then fill the classes you actually have. Empty cells stay free.")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
 
             ScrollView(.horizontal) {
@@ -339,7 +341,7 @@ struct AddTimeTable: View {
                 timeSlotDrafts.append(TimeSlotDraft())
             } label: {
                 Label("Add Period", systemImage: "plus.circle.fill")
-                    .font(.headline)
+                    .appFont(.headline)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
@@ -352,7 +354,7 @@ struct AddTimeTable: View {
             .fill(Color.secondary.opacity(0.12))
             .overlay {
                 Text(title)
-                    .font(.headline)
+                    .appFont(.headline)
                     .padding(.horizontal, 8)
             }
             .frame(height: 54)
@@ -363,7 +365,7 @@ struct AddTimeTable: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Period \(index + 1)")
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.subheadline, weight: .semibold)
                     Spacer()
                     if timeSlotDrafts.count > 1 {
                         Button(role: .destructive) {
@@ -424,13 +426,13 @@ struct AddTimeTable: View {
                 .overlay {
                     VStack(spacing: 6) {
                         Text(subject?.name ?? "Select")
-                            .font(.subheadline.weight(.bold))
+                            .appFont(.subheadline, weight: .bold)
                             .foregroundStyle(subject == nil ? .secondary : .primary)
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
                         if let subject {
                             Text(subject.room)
-                                .font(.caption2)
+                                .appFont(.caption2)
                                 .foregroundStyle(.secondary)
                         }
                     }

@@ -26,6 +26,17 @@
 	<string>Watch Ur Time uses alarms to remind you when class is about to start or end on iPhone and Apple Watch.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>fonts/JetBrainMono/JetBrainsMono-Bold.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-ExtraBold.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-ExtraLight.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-Light.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-Medium.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-Regular.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-SemiBold.ttf</string>
+		<string>fonts/JetBrainMono/JetBrainsMono-Thin.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

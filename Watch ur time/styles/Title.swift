@@ -12,8 +12,7 @@ struct Title: View {
     
     var body: some View {
         Text(text)
-            .font(.headline)
-            .bold()
+            .appFont(.headline, weight: .bold)
             .frame(
                 maxWidth: .infinity,
                 alignment: .top

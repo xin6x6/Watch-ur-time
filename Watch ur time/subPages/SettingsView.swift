@@ -21,6 +21,7 @@ struct SettingsView: View {
     @EnvironmentObject private var classReminderScheduler: ClassReminderScheduler
     @EnvironmentObject private var watchSyncManager: PhoneWatchSyncManager
     @AppStorage("theme") private var themes: Themes = .System
+    @AppStorage(AppFontOption.storageKey) private var appFontOption: AppFontOption = .apple
     @AppStorage("debug_unlocked") private var isDebugUnlocked = false
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -78,6 +79,21 @@ struct SettingsView: View {
 
                 Button("Import Timetable") {
                     isImporting = true
+                }
+            }
+
+            Section("Watch ur Time :: Time++") {
+                Picker("Font", selection: $appFontOption) {
+                    ForEach(AppFontOption.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                if !AppFontCatalog.isJetBrainsMonoAvailable {
+                    Text("JetBrains Mono is bundled but not active yet. Rebuild and relaunch the app once.")
+                        .appFont(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -151,6 +167,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .appDefaultFont()
         .fileExporter(
             isPresented: $isExporting,
             document: transferDocument,

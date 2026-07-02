@@ -12,11 +12,17 @@ import SwiftUI
 struct Watch_ur_timeApp: App {
     @UIApplicationDelegateAdaptor(AppNotificationDelegate.self) private var appDelegate
     @AppStorage("theme") private var theme: Themes = .System
-    private let sharedModelContainer: ModelContainer
+    @AppStorage(AppFontOption.storageKey) private var appFontOption: AppFontOption = .apple
+    private var sharedModelContainer: ModelContainer
     @StateObject private var watchSyncManager: PhoneWatchSyncManager
     @StateObject private var classReminderScheduler = ClassReminderScheduler()
 
     init() {
+        AppFontCatalog.registerBundledFontsIfNeeded()
+        let storedFontOption = AppFontOption(
+            rawValue: UserDefaults.standard.string(forKey: AppFontOption.storageKey) ?? ""
+        ) ?? .apple
+        AppControlFontStyler.apply(option: storedFontOption)
         let container = try! ModelContainer(for: TimetableStore.self)
         self.sharedModelContainer = container
         _watchSyncManager = StateObject(
@@ -36,9 +42,17 @@ struct Watch_ur_timeApp: App {
     var body: some Scene {
         WindowGroup {
             TabNavigationView()
+                .id(appFontOption.rawValue)
                 .environmentObject(watchSyncManager)
                 .environmentObject(classReminderScheduler)
+                .environment(\.appFontOption, appFontOption)
                 .preferredColorScheme(preferredScheme)
+                .onAppear {
+                    AppControlFontStyler.apply(option: appFontOption)
+                }
+                .onChange(of: appFontOption) { _, newValue in
+                    AppControlFontStyler.apply(option: newValue)
+                }
         }
         .modelContainer(sharedModelContainer)
     }

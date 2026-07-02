@@ -67,6 +67,7 @@ struct AssignmentsView: View {
                 AddAssignmentsView()
             }
         }
+        .appDefaultFont()
         .tint(.primary)
     }
 
@@ -166,7 +167,7 @@ struct AssignmentsView: View {
 
     private var weekSummary: some View {
         Text(weekRangeLabel)
-            .font(.headline)
+            .appFont(.headline)
     }
 
     private var weekRangeLabel: String {
@@ -238,7 +239,7 @@ struct AssignmentsView: View {
 
             HStack {
                 Text("Assignments")
-                    .font(.title2.weight(.bold))
+                    .appFont(.title2, weight: .bold)
                 Spacer()
             }
             .padding(.horizontal, 20)
@@ -254,12 +255,12 @@ struct AssignmentsView: View {
     private var sheetEmptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "checklist")
-                .font(.system(size: 30))
+                .appFont(size: 30)
                 .foregroundStyle(.secondary)
             Text("No assignments this week")
-                .font(.headline)
+                .appFont(.headline)
             Text("Add an assignment from the top-right button, or switch the week and subject filter.")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -324,12 +325,12 @@ struct AssignmentsView: View {
         GlassCard {
             VStack(spacing: 10) {
                 Image(systemName: "checklist")
-                    .font(.system(size: 30))
+                    .appFont(size: 30)
                     .foregroundStyle(.secondary)
                 Text("No assignments this week")
-                    .font(.headline)
+                    .appFont(.headline)
                 Text("Add an assignment from the top-right button, or switch the week and subject filter.")
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -341,22 +342,22 @@ struct AssignmentsView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(assignment.subject)
-                    .font(.headline)
+                    .appFont(.headline)
                     .strikethrough(assignment.isFinished)
                 Spacer()
                 Text("Due \(formatDate(assignment.dueDate))")
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Text(assignment.content)
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
                 .strikethrough(assignment.isFinished)
 
             Text("Start \(formatDate(assignment.startDate))")
-                .font(.caption)
+                .appFont(.caption)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -394,7 +395,7 @@ struct AssignmentsView: View {
                 ForEach(Array(groupedAssignments.enumerated()), id: \.element.id) { index, group in
                     VStack(alignment: .leading, spacing: 8) {
                         Text(group.subject)
-                            .font(.headline)
+                            .appFont(.headline)
                             .foregroundStyle(.secondary)
 
                         ForEach(group.assignments) { assignment in
@@ -558,7 +559,7 @@ struct BarAssignmentsView: View {
 
     private func headerCell(for date: Date, dayIndex: Int, columnWidth: CGFloat) -> some View {
         Text(headerLabel(for: date, dayIndex: dayIndex))
-            .font(.caption.weight(.semibold))
+            .appFont(.caption, weight: .semibold)
             .frame(width: columnWidth)
             .id(headerAnchorID(for: date, dayIndex: dayIndex))
     }
@@ -804,6 +805,7 @@ struct AddAssignmentsView: View {
         .formStyle(.grouped)
         .navigationTitle(assignmentID == nil ? "Add Assignment" : "Edit Assignment")
         .navigationBarTitleDisplayMode(.inline)
+        .appDefaultFont()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {

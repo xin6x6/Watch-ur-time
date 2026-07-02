@@ -43,6 +43,7 @@ struct NotificationView: View {
                     .impactOccurred()
             })
         }
+        .appDefaultFont()
         .tint(.primary)
     }
 
@@ -69,12 +70,12 @@ struct NotificationView: View {
         GlassCard {
             VStack(spacing: 10) {
                 Image(systemName: "bell.slash")
-                    .font(.system(size: 30))
+                    .appFont(size: 30)
                     .foregroundStyle(.secondary)
                 Text("No classes for \(dayTitle)")
-                    .font(.headline)
+                    .appFont(.headline)
                 Text("Create or edit your timetable first, then adjust notifications for each class here.")
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -112,6 +113,7 @@ struct AdjustNotificationView: View {
         }
         .navigationTitle("Adjust notification")
         .navigationBarTitleDisplayMode(.inline)
+        .appDefaultFont()
         .alert("Unable to save notification", isPresented: errorBinding) {
             Button("OK", role: .cancel) {
                 errorMessage = nil
@@ -134,12 +136,12 @@ struct AdjustNotificationView: View {
         GlassCard {
             VStack(alignment: .leading, spacing: 10) {
                 Text(entry.subject.name)
-                    .font(.title3.bold())
+                    .appFont(.title3, weight: .bold)
                 Text(entry.subject.room)
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                     .foregroundStyle(.secondary)
                 Text(entry.slot.displayLabel)
-                    .font(.headline)
+                    .appFont(.headline)
                     .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -149,7 +151,7 @@ struct AdjustNotificationView: View {
     private var momentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("At")
-                .font(.headline)
+                .appFont(.headline)
             Picker("At", selection: $selectedMoment) {
                 ForEach(NotificationMoment.allCases) { option in
                     Text(option.title).tag(option)
@@ -162,7 +164,7 @@ struct AdjustNotificationView: View {
     private var advanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("In advance for")
-                .font(.headline)
+                .appFont(.headline)
             Picker("In advance for", selection: $advanceTime) {
                 ForEach(advanceOptions, id: \.self) { minute in
                     Text(minute == 0 ? "On time" : "\(minute) mins")
@@ -177,9 +179,9 @@ struct AdjustNotificationView: View {
     private var uniformInfoSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("In advance for")
-                .font(.headline)
+                .appFont(.headline)
             Text("Using uniform reminder time from Settings: \(uniformAdvanceSummary)")
-                .font(.subheadline)
+                .appFont(.subheadline)
                 .foregroundStyle(.secondary)
         }
     }

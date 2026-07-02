@@ -38,9 +38,9 @@ struct AssignmentBar: View {
 
             HStack(spacing: 4) {
                 Text(subject + ":")
-                    .font(.caption.bold())
+                    .appFont(.caption, weight: .bold)
                 Text(assignment)
-                    .font(.caption)
+                    .appFont(.caption)
             }
             .lineLimit(1)
             .minimumScaleFactor(0.65)
