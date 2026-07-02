@@ -27,6 +27,6 @@ final class AppNotificationDelegate: NSObject, UIApplicationDelegate, UNUserNoti
             return []
         }
 
-        return [.banner, .list, .sound]
+        return mode.allowsAlarm ? [.banner, .list, .sound] : [.banner, .list]
     }
 }

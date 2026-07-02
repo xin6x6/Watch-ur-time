@@ -44,7 +44,8 @@ final class WatchClassReminderScheduler {
             let content = UNMutableNotificationContent()
             content.title = reminder.title
             content.body = reminder.body
-            content.sound = .default
+            let playsSound = snapshot.notificationDeliveryMode.allowsAlarm
+            content.sound = playsSound ? .default : nil
             content.threadIdentifier = "watch-class-reminders"
             content.interruptionLevel = .timeSensitive
 

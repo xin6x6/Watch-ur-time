@@ -49,6 +49,10 @@ enum WatchNotificationDeliveryMode: Int, Codable {
     var allowsBanner: Bool {
         self == .bannerOnly || self == .both
     }
+
+    var allowsAlarm: Bool {
+        self == .alarmOnly || self == .both
+    }
 }
 
 enum WatchNotificationTimeMode: Int, Codable {

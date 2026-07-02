@@ -27,7 +27,8 @@ final class ClassReminderScheduler: ObservableObject {
         snapshot.notificationDeliveryMode.persistToDefaults()
 
         await syncPhoneNotifications(
-            snapshot.notificationDeliveryMode.allowsBanner ? reminders : []
+            snapshot.notificationDeliveryMode.allowsBanner ? reminders : [],
+            playsSound: snapshot.notificationDeliveryMode.allowsAlarm
         )
 
         if #available(iOS 26.0, *) {
@@ -169,7 +170,10 @@ final class ClassReminderScheduler: ObservableObject {
         }
     }
 
-    private func syncPhoneNotifications(_ reminders: [ScheduledClassReminder]) async {
+    private func syncPhoneNotifications(
+        _ reminders: [ScheduledClassReminder],
+        playsSound: Bool
+    ) async {
         let existingIDs = Set(defaults.stringArray(forKey: scheduledNotificationKey) ?? [])
         let desiredIDs = Set(reminders.map(\.notificationIdentifier))
         let identifiersToRemove = Array(existingIDs.union(desiredIDs))
@@ -187,7 +191,7 @@ final class ClassReminderScheduler: ObservableObject {
         }
 
         for reminder in reminders {
-            await schedulePhoneNotification(for: reminder, repeats: true)
+            await schedulePhoneNotification(for: reminder, repeats: true, playsSound: playsSound)
         }
     }
 
@@ -261,7 +265,8 @@ final class ClassReminderScheduler: ObservableObject {
 
     private func schedulePhoneNotification(
         for reminder: ScheduledClassReminder,
-        repeats: Bool = false
+        repeats: Bool = false,
+        playsSound: Bool = true
     ) async {
         let granted = await requestNotificationAuthorizationIfNeeded()
         guard granted else {
@@ -269,9 +274,10 @@ final class ClassReminderScheduler: ObservableObject {
         }
 
         let content = UNMutableNotificationContent()
-        content.title = ""
+        content.title = reminder.title
         content.body = reminder.phoneMessage
-        content.sound = .default
+        content.sound = playsSound ? .default : nil
+        content.interruptionLevel = .timeSensitive
 
         let trigger: UNNotificationTrigger
         if repeats {
