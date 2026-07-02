@@ -52,6 +52,7 @@ struct Watch_ur_timeApp: App {
                 }
                 .onChange(of: appFontOption) { _, newValue in
                     AppControlFontStyler.apply(option: newValue)
+                    watchSyncManager.pushLatestSnapshotIfPossible()
                 }
         }
         .modelContainer(sharedModelContainer)

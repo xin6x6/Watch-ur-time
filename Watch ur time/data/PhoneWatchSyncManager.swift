@@ -13,6 +13,7 @@ import WatchConnectivity
 enum WatchSyncMessageKey {
     static let action = "action"
     static let snapshot = "snapshot"
+    static let appFontOption = "appFontOption"
     static let assignment = "assignment"
     static let assignmentID = "assignmentID"
     static let fireTimestamp = "fireTimestamp"
@@ -82,7 +83,11 @@ final class PhoneWatchSyncManager: NSObject, ObservableObject {
             return nil
         }
 
-        return [WatchSyncMessageKey.snapshot: data]
+        return [
+            WatchSyncMessageKey.snapshot: data,
+            WatchSyncMessageKey.appFontOption: UserDefaults.standard.string(forKey: AppFontOption.storageKey)
+                ?? AppFontOption.apple.rawValue
+        ]
     }
 
     private func sendWatchMessage(_ payload: [String: Any]) {

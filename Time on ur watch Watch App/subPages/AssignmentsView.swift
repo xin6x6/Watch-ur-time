@@ -41,6 +41,7 @@ struct AssignmentsView: View {
                 }
             }
         }
+        .watchAppDefaultFont()
         .navigationTitle("Assignments")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -70,17 +71,17 @@ struct AssignmentsView: View {
     private func assignmentRow(_ assignment: WatchTimetableAssignment) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(assignment.subject)
-                .font(.headline)
+                .watchAppFont(.headline)
                 .strikethrough(assignment.isFinished)
 
             Text(assignment.content)
-                .font(.caption)
+                .watchAppFont(.caption)
                 .foregroundStyle(.primary)
                 .lineLimit(3)
                 .strikethrough(assignment.isFinished)
 
             Text("Due \(watchFormatDate(assignment.dueDate))")
-                .font(.caption2)
+                .watchAppFont(.caption2)
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
@@ -123,6 +124,7 @@ private struct WatchAssignmentFilterView: View {
                 }
             }
         }
+        .watchAppDefaultFont()
         .navigationTitle("Filter")
     }
 }
@@ -165,6 +167,7 @@ struct WatchAssignmentEditorView: View {
                 DatePicker("Due", selection: $dueDate, in: startDate..., displayedComponents: .date)
             }
         }
+        .watchAppDefaultFont()
         .navigationTitle(assignmentID == nil ? "Add" : "Edit")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {

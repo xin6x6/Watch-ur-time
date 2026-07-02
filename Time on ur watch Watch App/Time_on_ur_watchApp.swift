@@ -15,6 +15,8 @@ struct Time_on_ur_watch_Watch_AppApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(dataStore)
+                .environment(\.watchAppFontOption, dataStore.appFontOption)
+                .watchAppDefaultFont()
         }
     }
 }

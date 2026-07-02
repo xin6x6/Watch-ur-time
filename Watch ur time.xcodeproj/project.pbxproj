@@ -99,6 +99,14 @@
 				ContentView.swift,
 				data/WatchClassReminderScheduler.swift,
 				data/WatchDataStore.swift,
+				fonts/JetBrainMono/JetBrainsMono-Bold.ttf,
+				fonts/JetBrainMono/JetBrainsMono-ExtraBold.ttf,
+				fonts/JetBrainMono/JetBrainsMono-ExtraLight.ttf,
+				fonts/JetBrainMono/JetBrainsMono-Light.ttf,
+				fonts/JetBrainMono/JetBrainsMono-Medium.ttf,
+				fonts/JetBrainMono/JetBrainsMono-Regular.ttf,
+				fonts/JetBrainMono/JetBrainsMono-SemiBold.ttf,
+				fonts/JetBrainMono/JetBrainsMono-Thin.ttf,
 				styles/GlassCard.swift,
 				subPages/AssignmentsView.swift,
 				subPages/TimeTableView.swift,
@@ -1074,7 +1082,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = "Dev 0.67";
+				MARKETING_VERSION = 0.67;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1106,7 +1114,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = "Dev 0.67";
+				MARKETING_VERSION = 0.67;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.xin.Watch-ur-time.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

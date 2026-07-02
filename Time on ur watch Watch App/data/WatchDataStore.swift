@@ -20,6 +20,7 @@ enum WatchTimeMeridiem: String, Codable, CaseIterable, Identifiable {
 enum WatchSyncMessageKey {
     static let action = "action"
     static let snapshot = "snapshot"
+    static let appFontOption = "appFontOption"
     static let assignment = "assignment"
     static let assignmentID = "assignmentID"
     static let fireTimestamp = "fireTimestamp"
@@ -306,8 +307,10 @@ struct WatchAssignmentSection: Identifiable {
 final class WatchDataStore: NSObject, ObservableObject {
     @Published private(set) var snapshot: WatchTimetableStoreSnapshot
     @Published var selectedDay: Int
+    @Published var appFontOption: WatchAppFontOption
 
     private let storageKey = "watch_timetable_snapshot"
+    private let fontStorageKey = "watch_app_font_option"
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private let reminderScheduler = WatchClassReminderScheduler()
@@ -315,7 +318,9 @@ final class WatchDataStore: NSObject, ObservableObject {
     override init() {
         self.snapshot = Self.loadSnapshot(storageKey: storageKey)
         self.selectedDay = Self.currentTimetableDay()
+        self.appFontOption = Self.loadAppFontOption(storageKey: fontStorageKey)
         super.init()
+        WatchAppFontCatalog.registerBundledFontsIfNeeded()
         activateSession()
         Task {
             await reminderScheduler.sync(with: snapshot)
@@ -506,7 +511,17 @@ final class WatchDataStore: NSObject, ObservableObject {
         }
     }
 
+    private func persistAppFontOption() {
+        UserDefaults.standard.set(appFontOption.rawValue, forKey: fontStorageKey)
+    }
+
     private func handle(message: [String: Any]) {
+        if let rawFontOption = message[WatchSyncMessageKey.appFontOption] as? String,
+           let decodedFontOption = WatchAppFontOption(rawValue: rawFontOption) {
+            appFontOption = decodedFontOption
+            persistAppFontOption()
+        }
+
         if let action = message[WatchSyncMessageKey.action] as? String {
             switch action {
             case WatchSyncMessageKey.scheduleWatchTestReminder:
@@ -585,6 +600,16 @@ final class WatchDataStore: NSObject, ObservableObject {
         }
 
         return snapshot
+    }
+
+    private static func loadAppFontOption(storageKey: String) -> WatchAppFontOption {
+        guard let rawValue = UserDefaults.standard.string(forKey: storageKey),
+              let option = WatchAppFontOption(rawValue: rawValue)
+        else {
+            return .apple
+        }
+
+        return option
     }
 
     static func currentTimetableDay(for date: Date = Date()) -> Int {

@@ -24,17 +24,18 @@ struct TimeTableView: View {
                 GlassCard {
                     VStack(spacing: 6) {
                         Image(systemName: "calendar.badge.exclamationmark")
-                            .font(.title3)
+                            .watchAppFont(.title3)
                         Text("No timetable yet")
-                            .font(.headline)
+                            .watchAppFont(.headline)
                         Text("Add subjects on iPhone first.")
-                            .font(.caption2)
+                            .watchAppFont(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
                 }
             }
         }
+        .watchAppDefaultFont()
         .navigationTitle(WatchDataStore.titleForDay(dataStore.selectedDay))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -75,10 +76,10 @@ struct TimeTableView: View {
 
                     VStack(spacing: 6) {
                         Image(systemName: "arrow.down")
-                            .font(.caption)
+                            .watchAppFont(.caption)
                             .foregroundStyle(.secondary)
                         Text("Continue scrolling for assignments")
-                            .font(.caption2)
+                            .watchAppFont(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -130,20 +131,20 @@ struct TimeTableView: View {
         ZStack(alignment: .bottomTrailing) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(entry.subject.name)
-                    .font(.headline)
+                    .watchAppFont(.headline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 HStack(spacing: 4) {
                     Text(entry.slot.formattedStartTime)
-                        .font(.headline)
+                        .watchAppFont(.headline)
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
                     Text("-")
                     Text(entry.slot.formattedEndTime)
                 }
-                .font(.caption2)
+                .watchAppFont(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .padding(.leading, 6)
@@ -153,7 +154,7 @@ struct TimeTableView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             Text(entry.subject.room)
-                .font(.caption2)
+                .watchAppFont(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .padding(.trailing, 2)
@@ -193,6 +194,7 @@ private struct WatchDayPickerView: View {
                 }
             }
         }
+        .watchAppDefaultFont()
         .navigationTitle("Weekday")
     }
 }
