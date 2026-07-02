@@ -11,6 +11,7 @@ import SwiftUI
 @main
 struct Watch_ur_timeApp: App {
     @UIApplicationDelegateAdaptor(AppNotificationDelegate.self) private var appDelegate
+    @AppStorage("theme") private var theme: Themes = .System
     private let sharedModelContainer: ModelContainer
     @StateObject private var watchSyncManager: PhoneWatchSyncManager
     @StateObject private var classReminderScheduler = ClassReminderScheduler()
@@ -37,7 +38,19 @@ struct Watch_ur_timeApp: App {
             TabNavigationView()
                 .environmentObject(watchSyncManager)
                 .environmentObject(classReminderScheduler)
+                .preferredColorScheme(preferredScheme)
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    private var preferredScheme: ColorScheme? {
+        switch theme {
+        case .Dark:
+            return .dark
+        case .Light:
+            return .light
+        case .System:
+            return nil
+        }
     }
 }

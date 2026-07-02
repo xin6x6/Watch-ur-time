@@ -183,6 +183,7 @@ struct DayView: View {
 }
 
 struct AddTimeTable: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
@@ -232,6 +233,7 @@ struct AddTimeTable: View {
                 } label: {
                     Text("Next")
                         .font(.headline)
+                        .foregroundStyle(colorScheme == .dark ? Color.black : Color.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                 }

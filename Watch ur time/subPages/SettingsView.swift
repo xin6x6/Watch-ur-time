@@ -151,7 +151,6 @@ struct SettingsView: View {
                 }
             }
         }
-        .preferredColorScheme(preferredScheme)
         .fileExporter(
             isPresented: $isExporting,
             document: transferDocument,
@@ -172,17 +171,6 @@ struct SettingsView: View {
             }
         } message: {
             Text(transferMessage ?? "")
-        }
-    }
-
-    private var preferredScheme: ColorScheme? {
-        switch themes {
-        case .Dark:
-            return .dark
-        case .Light:
-            return .light
-        case .System:
-            return nil
         }
     }
 
