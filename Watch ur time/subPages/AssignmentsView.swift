@@ -16,7 +16,8 @@ struct AssignmentsView: View {
     @State private var isAddingAssignment = false
     @State private var timelineScrollRequestID = UUID()
     @State private var drawerStop: AssignmentDrawerStop = .collapsed
-    @GestureState private var drawerDragTranslation: CGFloat = 0
+    @State private var interactiveDrawerHeight: CGFloat?
+    @State private var dragStartDrawerHeight: CGFloat?
 
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -211,7 +212,7 @@ struct AssignmentsView: View {
         .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
         .shadow(color: .black.opacity(0.14 * revealProgress), radius: 16, y: -2)
         .transaction { transaction in
-            if drawerDragTranslation != 0 {
+            if interactiveDrawerHeight != nil {
                 transaction.animation = nil
             }
         }
@@ -269,11 +270,11 @@ struct AssignmentsView: View {
 
     private func drawerMetrics(for geo: GeometryProxy) -> AssignmentDrawerMetrics {
         let horizontalInset: CGFloat = 12
-        let bottomMargin: CGFloat = 8
+        let bottomMargin: CGFloat = 100
         let handleAreaHeight: CGFloat = 16
         let collapsedVisibleHeight: CGFloat = 16
         let headerHeight: CGFloat = 60
-        let tabBarClearance = max(58, geo.safeAreaInsets.bottom + 50)
+        let tabBarClearance = -max(0, geo.safeAreaInsets.bottom)
         let expandedHeight = max(geo.size.height - tabBarClearance - bottomMargin, headerHeight)
         let middleHeight = min(
             max(expandedHeight * 0.42, 260),
@@ -294,9 +295,17 @@ struct AssignmentsView: View {
     }
 
     private func currentDrawerHeight(for metrics: AssignmentDrawerMetrics) -> CGFloat {
-        let baseHeight = height(for: drawerStop, metrics: metrics)
-        let proposedHeight = baseHeight - drawerDragTranslation
-        return min(max(proposedHeight, metrics.collapsedVisibleHeight), metrics.expandedHeight)
+        if let interactiveDrawerHeight {
+            return clampedDrawerHeight(interactiveDrawerHeight, metrics: metrics)
+        }
+        return height(for: drawerStop, metrics: metrics)
+    }
+
+    private func clampedDrawerHeight(
+        _ proposedHeight: CGFloat,
+        metrics: AssignmentDrawerMetrics
+    ) -> CGFloat {
+        min(max(proposedHeight, metrics.collapsedVisibleHeight), metrics.expandedHeight)
     }
 
     private func height(for stop: AssignmentDrawerStop, metrics: AssignmentDrawerMetrics) -> CGFloat {
@@ -341,19 +350,30 @@ struct AssignmentsView: View {
 
     private func drawerGesture(for metrics: AssignmentDrawerMetrics) -> some Gesture {
         DragGesture(minimumDistance: 2, coordinateSpace: .global)
-            .updating($drawerDragTranslation) { value, state, _ in
-                state = value.translation.height
+            .onChanged { value in
+                let startHeight = dragStartDrawerHeight ?? currentDrawerHeight(for: metrics)
+                if dragStartDrawerHeight == nil {
+                    dragStartDrawerHeight = startHeight
+                }
+                interactiveDrawerHeight = clampedDrawerHeight(
+                    startHeight - value.translation.height,
+                    metrics: metrics
+                )
             }
             .onEnded { value in
-                let baseHeight = height(for: drawerStop, metrics: metrics)
-                let projectedHeight = min(
-                    max(baseHeight - value.predictedEndTranslation.height, metrics.collapsedVisibleHeight),
-                    metrics.expandedHeight
+                let startHeight = dragStartDrawerHeight ?? currentDrawerHeight(for: metrics)
+                let projectedHeight = clampedDrawerHeight(
+                    startHeight - value.predictedEndTranslation.height,
+                    metrics: metrics
                 )
+                let targetStop = nearestDrawerStop(for: projectedHeight, metrics: metrics)
 
                 withAnimation(drawerAnimation) {
-                    drawerStop = nearestDrawerStop(for: projectedHeight, metrics: metrics)
+                    drawerStop = targetStop
+                    interactiveDrawerHeight = nil
                 }
+
+                dragStartDrawerHeight = nil
             }
     }
 
