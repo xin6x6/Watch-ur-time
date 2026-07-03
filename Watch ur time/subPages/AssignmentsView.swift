@@ -14,6 +14,8 @@ struct AssignmentsView: View {
     @State private var selectedSubjectFilter = AssignmentFilter.all
     @State private var selectedWeekStart = startOfWeek(for: Date())
     @State private var isAddingAssignment = false
+    @State private var isEditingAssignment = false
+    @State private var editingAssignmentID: UUID?
     @State private var timelineScrollRequestID = UUID()
     @State private var drawerStop: AssignmentDrawerStop = .collapsed
     @State private var interactiveDrawerHeight: CGFloat?
@@ -61,12 +63,18 @@ struct AssignmentsView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     GlassButton(img: "plus") {
+                        editingAssignmentID = nil
                         isAddingAssignment = true
                     }
                 }
             }
             .navigationDestination(isPresented: $isAddingAssignment) {
                 AddAssignmentsView()
+            }
+            .navigationDestination(isPresented: $isEditingAssignment) {
+                if let editingAssignmentID {
+                    AddAssignmentsView(assignmentID: editingAssignmentID)
+                }
             }
         }
         .appDefaultFont()
@@ -459,20 +467,19 @@ struct AssignmentsView: View {
                             .foregroundStyle(.secondary)
 
                         ForEach(group.assignments) { assignment in
-                            NavigationLink(destination: AddAssignmentsView(assignmentID: assignment.id)) {
-                                assignmentRow(for: assignment)
-                            }
-                            .buttonStyle(.plain)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button("已完成") {
+                            SwipeableAssignmentRow(
+                                onTap: {
+                                    editingAssignmentID = assignment.id
+                                    isEditingAssignment = true
+                                },
+                                onComplete: {
                                     toggleCompletion(for: assignment)
-                                }
-                                .tint(.green)
-
-                                Button("删除", role: .destructive) {
+                                },
+                                onDelete: {
                                     deleteAssignment(assignment)
                                 }
-                                .tint(.red)
+                            ) {
+                                assignmentRow(for: assignment)
                             }
                         }
 
@@ -529,21 +536,28 @@ struct BarAssignmentsView: View {
     let subjectColor: (String) -> Color
 
     @State private var zoomScale: CGFloat = 1
-    @GestureState private var pinchScale: CGFloat = 1
     @State private var lastObservedWeekStart = startOfWeek(for: Date())
+    @State private var ignoreOffsetUpdatesUntil: Date?
+    @State private var currentScrollOffset: CGFloat = 0
+    @State private var pinchBaseZoomScale: CGFloat?
+    @State private var pinchStartScrollOffset: CGFloat?
 
     private let barHeight: CGFloat = 44
     private let laneSpacing: CGFloat = 10
     private let subjectSpacing: CGFloat = 16
+    private let zoomAnchorSegmentsPerDay = 12
 
     var body: some View {
         ScrollViewReader { proxy in
             GeometryReader { geo in
-                let columnWidth = max((geo.size.width / 7) * clampedZoomScale, 28)
+                let columnWidth = max((geo.size.width / 7) * zoomScale, 28)
                 let totalWidth = CGFloat(timelineDates.count) * columnWidth
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 12) {
+                        timelineAnchorRow(columnWidth: columnWidth)
+                            .frame(height: 0)
+
                         headerRow(columnWidth: columnWidth)
 
                         ZStack(alignment: .topLeading) {
@@ -585,23 +599,16 @@ struct BarAssignmentsView: View {
                 }
                 .coordinateSpace(name: "AssignmentsTimelineScroll")
                 .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-                .simultaneousGesture(zoomGesture)
+                .simultaneousGesture(zoomGesture(proxy: proxy, viewportWidth: geo.size.width))
                 .onAppear {
                     lastObservedWeekStart = startOfWeek(for: visibleWeekStart)
-                    scrollToWeekStart(startOfWeek(for: visibleWeekStart), proxy: proxy)
-                }
-                .onChange(of: visibleWeekStart) { _, newValue in
-                    let normalized = startOfWeek(for: newValue)
-                    guard normalized != lastObservedWeekStart else { return }
-                    scrollToWeekStart(normalized, proxy: proxy)
-                }
-                .onChange(of: clampedZoomScale) { _, _ in
-                    scrollToWeekStart(startOfWeek(for: visibleWeekStart), proxy: proxy)
+                    programmaticScroll(to: startOfWeek(for: visibleWeekStart), proxy: proxy)
                 }
                 .onChange(of: scrollRequestID) { _, _ in
-                    scrollToWeekStart(startOfWeek(for: visibleWeekStart), proxy: proxy)
+                    programmaticScroll(to: startOfWeek(for: visibleWeekStart), proxy: proxy)
                 }
                 .onPreferenceChange(TimelineScrollOffsetKey.self) { offset in
+                    currentScrollOffset = max(offset, 0)
                     updateVisibleWeek(for: offset, columnWidth: columnWidth, viewportWidth: geo.size.width)
                 }
             }
@@ -624,17 +631,72 @@ struct BarAssignmentsView: View {
             .id(headerAnchorID(for: date, dayIndex: dayIndex))
     }
 
-    private var clampedZoomScale: CGFloat {
-        min(max(zoomScale * pinchScale, 1), 3)
+    private func timelineAnchorRow(columnWidth: CGFloat) -> some View {
+        let segmentWidth = columnWidth / CGFloat(zoomAnchorSegmentsPerDay)
+        let segmentCount = max(timelineDates.count * zoomAnchorSegmentsPerDay, 1)
+
+        return HStack(spacing: 0) {
+            ForEach(0..<segmentCount, id: \.self) { index in
+                Color.clear
+                    .frame(width: segmentWidth, height: 0)
+                    .id(zoomAnchorID(index))
+            }
+        }
     }
 
-    private var zoomGesture: some Gesture {
-        MagnificationGesture()
-            .updating($pinchScale) { value, state, _ in
-                state = value
+    private func zoomGesture(
+        proxy: ScrollViewProxy,
+        viewportWidth: CGFloat
+    ) -> some Gesture {
+        MagnifyGesture(minimumScaleDelta: 0.01)
+            .onChanged { value in
+                let baseZoomScale = pinchBaseZoomScale ?? zoomScale
+                if pinchBaseZoomScale == nil {
+                    pinchBaseZoomScale = baseZoomScale
+                }
+
+                let startOffset = pinchStartScrollOffset ?? currentScrollOffset
+                if pinchStartScrollOffset == nil {
+                    pinchStartScrollOffset = startOffset
+                }
+
+                let nextZoomScale = min(max(baseZoomScale * value.magnification, 1), 3)
+                let startColumnWidth = max((viewportWidth / 7) * baseZoomScale, 28)
+                let nextColumnWidth = max((viewportWidth / 7) * nextZoomScale, 28)
+                let anchorTimelineX = startOffset + value.startLocation.x
+                let scaledAnchorTimelineX = anchorTimelineX * (nextColumnWidth / startColumnWidth)
+                let desiredOffset = scaledAnchorTimelineX - value.startLocation.x
+
+                zoomScale = nextZoomScale
+                setTimelineOffset(
+                    desiredOffset,
+                    proxy: proxy,
+                    columnWidth: nextColumnWidth,
+                    viewportWidth: viewportWidth,
+                    animated: false
+                )
             }
             .onEnded { value in
-                zoomScale = min(max(zoomScale * value, 1), 3)
+                let baseZoomScale = pinchBaseZoomScale ?? zoomScale
+                let startOffset = pinchStartScrollOffset ?? currentScrollOffset
+                let finalZoomScale = min(max(baseZoomScale * value.magnification, 1), 3)
+                let startColumnWidth = max((viewportWidth / 7) * baseZoomScale, 28)
+                let finalColumnWidth = max((viewportWidth / 7) * finalZoomScale, 28)
+                let anchorTimelineX = startOffset + value.startLocation.x
+                let scaledAnchorTimelineX = anchorTimelineX * (finalColumnWidth / startColumnWidth)
+                let desiredOffset = scaledAnchorTimelineX - value.startLocation.x
+
+                zoomScale = finalZoomScale
+                setTimelineOffset(
+                    desiredOffset,
+                    proxy: proxy,
+                    columnWidth: finalColumnWidth,
+                    viewportWidth: viewportWidth,
+                    animated: false
+                )
+
+                pinchBaseZoomScale = nil
+                pinchStartScrollOffset = nil
             }
     }
 
@@ -678,10 +740,13 @@ struct BarAssignmentsView: View {
 
     private var timelineBounds: (start: Date, endExclusive: Date) {
         let calendar = Calendar.current
-        let relevantDates = assignments.flatMap { [min($0.startDate, $0.dueDate), max($0.startDate, $0.dueDate)] } + [Date()]
+        let selectedWeekStart = startOfWeek(for: visibleWeekStart)
+        let selectedWeekEnd = calendar.date(byAdding: .day, value: 6, to: selectedWeekStart) ?? selectedWeekStart
+        let relevantDates = assignments.flatMap { [min($0.startDate, $0.dueDate), max($0.startDate, $0.dueDate)] }
+            + [Date(), selectedWeekStart, selectedWeekEnd]
 
         guard let minDate = relevantDates.min(), let maxDate = relevantDates.max() else {
-            let start = startOfWeek(for: Date())
+            let start = selectedWeekStart
             let end = calendar.date(byAdding: .day, value: 7, to: start) ?? start
             return (start, end)
         }
@@ -719,6 +784,10 @@ struct BarAssignmentsView: View {
 
     private func weekAnchorID(_ weekStart: Date) -> String {
         "week-\(Int(weekStart.timeIntervalSinceReferenceDate))"
+    }
+
+    private func zoomAnchorID(_ index: Int) -> String {
+        "zoom-anchor-\(index)"
     }
 
     private var groupedAssignments: [SubjectAssignmentGroup] {
@@ -801,6 +870,9 @@ struct BarAssignmentsView: View {
     }
 
     private func updateVisibleWeek(for offset: CGFloat, columnWidth: CGFloat, viewportWidth: CGFloat) {
+        if let ignoreOffsetUpdatesUntil, ignoreOffsetUpdatesUntil > .now {
+            return
+        }
         guard !timelineDates.isEmpty else { return }
 
         let leadingDayIndex = max(Int(round(offset / max(columnWidth, 1))), 0)
@@ -818,6 +890,35 @@ struct BarAssignmentsView: View {
         lastObservedWeekStart = normalized
         withAnimation(.easeInOut(duration: 0.22)) {
             proxy.scrollTo(weekAnchorID(normalized), anchor: .leading)
+        }
+    }
+
+    private func programmaticScroll(to weekStart: Date, proxy: ScrollViewProxy) {
+        ignoreOffsetUpdatesUntil = Date().addingTimeInterval(0.35)
+        scrollToWeekStart(weekStart, proxy: proxy)
+    }
+
+    private func setTimelineOffset(
+        _ desiredOffset: CGFloat,
+        proxy: ScrollViewProxy,
+        columnWidth: CGFloat,
+        viewportWidth: CGFloat,
+        animated: Bool
+    ) {
+        let segmentWidth = columnWidth / CGFloat(zoomAnchorSegmentsPerDay)
+        let totalWidth = CGFloat(timelineDates.count) * columnWidth
+        let maxOffset = max(totalWidth - viewportWidth, 0)
+        let clampedOffset = min(max(desiredOffset, 0), maxOffset)
+        let maxSegmentIndex = max(timelineDates.count * zoomAnchorSegmentsPerDay - 1, 0)
+        let targetIndex = min(max(Int(round(clampedOffset / max(segmentWidth, 1))), 0), maxSegmentIndex)
+
+        ignoreOffsetUpdatesUntil = Date().addingTimeInterval(0.12)
+        currentScrollOffset = clampedOffset
+
+        var transaction = Transaction()
+        transaction.animation = animated ? .easeInOut(duration: 0.18) : nil
+        withTransaction(transaction) {
+            proxy.scrollTo(zoomAnchorID(targetIndex), anchor: .leading)
         }
     }
 }
@@ -994,6 +1095,139 @@ private enum AssignmentDrawerStop: CaseIterable {
     case collapsed
     case middle
     case expanded
+}
+
+private struct SwipeableAssignmentRow<Content: View>: View {
+    let onTap: () -> Void
+    let onComplete: () -> Void
+    let onDelete: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    @State private var settledOffset: CGFloat = 0
+    @State private var dragStartOffset: CGFloat?
+    @State private var suppressTap = false
+
+    private let actionWidth: CGFloat = 92
+    private let cornerRadius: CGFloat = 22
+
+    var body: some View {
+        let totalActionWidth = actionWidth * 2
+
+        ZStack(alignment: .trailing) {
+            HStack(spacing: 0) {
+                actionButton(
+                    title: AppLocalizer.localized("已完成"),
+                    color: .green,
+                    width: actionWidth
+                ) {
+                    withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.9)) {
+                        settledOffset = 0
+                    }
+                    onComplete()
+                }
+
+                actionButton(
+                    title: AppLocalizer.localized("删除"),
+                    color: .red,
+                    width: actionWidth
+                ) {
+                    withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.9)) {
+                        settledOffset = 0
+                    }
+                    onDelete()
+                }
+            }
+            .frame( maxHeight: .infinity, alignment: .trailing)
+            .opacity(settledOffset < -1 ? 1 : 0)
+            .allowsHitTesting(settledOffset < -1)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+
+            content()
+                .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                .onTapGesture {
+                    guard !suppressTap else {
+                        return
+                    }
+                    if settledOffset < -8 {
+                        withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.9)) {
+                            settledOffset = 0
+                        }
+                    } else {
+                        onTap()
+                    }
+                }
+                .offset(x: settledOffset)
+                .allowsHitTesting(true)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .highPriorityGesture(
+            DragGesture(minimumDistance: 10, coordinateSpace: .global)
+                .onChanged { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) else {
+                        return
+                    }
+
+                    if abs(value.translation.width) > 6 {
+                        suppressTap = true
+                    }
+
+                    let startOffset = dragStartOffset ?? settledOffset
+                    if dragStartOffset == nil {
+                        dragStartOffset = startOffset
+                    }
+
+                    settledOffset = min(
+                        max(startOffset + value.translation.width, -totalActionWidth),
+                        0
+                    )
+                }
+                .onEnded { value in
+                    defer {
+                        dragStartOffset = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            suppressTap = false
+                        }
+                    }
+                    guard abs(value.translation.width) > abs(value.translation.height) else {
+                        return
+                    }
+
+                    let startOffset = dragStartOffset ?? settledOffset
+                    let projectedOffset = min(
+                        max(startOffset + value.predictedEndTranslation.width, -totalActionWidth),
+                        0
+                    )
+
+                    withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.9)) {
+                        settledOffset = projectedOffset < -(actionWidth * 0.9) ? -totalActionWidth : 0
+                    }
+                }
+        )
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                if suppressTap {
+                    return
+                }
+            }
+        )
+    }
+
+    private func actionButton(
+        title: String,
+        color: Color,
+        width: CGFloat,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .appFont(.subheadline, weight: .semibold)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(width: width)
+        .frame(maxHeight: .infinity)
+        .background(color)
+    }
 }
 
 private struct AssignmentDrawerMetrics {
