@@ -17,13 +17,13 @@ enum AppTab: Int, Hashable, CaseIterable {
     var title: String {
         switch self {
         case .timetable:
-            return "Timetable"
+            return AppLocalizer.localized("Timetable")
         case .notification:
-            return "Notification"
+            return AppLocalizer.localized("Notification")
         case .assignments:
-            return "Assignments"
+            return AppLocalizer.localized("Assignments")
         case .settings:
-            return "Settings"
+            return AppLocalizer.localized("Settings")
         }
     }
 

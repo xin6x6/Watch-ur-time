@@ -21,9 +21,9 @@ enum AppFontOption: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .apple:
-            return "Apple"
+            return AppLocalizer.localized("Apple")
         case .jetBrainsMono:
-            return "JetBrains Mono"
+            return AppLocalizer.localized("JetBrains Mono")
         }
     }
 }

@@ -22,6 +22,7 @@ struct SettingsView: View {
     @EnvironmentObject private var watchSyncManager: PhoneWatchSyncManager
     @AppStorage("theme") private var themes: Themes = .System
     @AppStorage(AppFontOption.storageKey) private var appFontOption: AppFontOption = .apple
+    @AppStorage(AppLanguage.storageKey) private var appLanguage: AppLanguage = .system
     @AppStorage("debug_unlocked") private var isDebugUnlocked = false
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -90,6 +91,13 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
 
+                Picker("Language", selection: $appLanguage) {
+                    ForEach(AppLanguage.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+
                 if !AppFontCatalog.isJetBrainsMonoAvailable {
                     Text("JetBrains Mono is bundled but not active yet. Rebuild and relaunch the app once.")
                         .appFont(.footnote)
@@ -124,7 +132,7 @@ struct SettingsView: View {
                         Task {
                             let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
                             watchSyncManager.scheduleWatchTestReminder()
-                            transferMessage = "\(phoneResult)\nWatch test reminder requested."
+                            transferMessage = "\(phoneResult)\n\(AppLocalizer.localized("Watch test reminder requested."))"
                         }
                     }
 
@@ -132,7 +140,7 @@ struct SettingsView: View {
                         Task {
                             let phoneResult = await classReminderScheduler.clearDebugAlarm()
                             watchSyncManager.clearWatchTestReminder()
-                            transferMessage = "\(phoneResult)\nWatch test reminder clear requested."
+                            transferMessage = "\(phoneResult)\n\(AppLocalizer.localized("Watch test reminder clear requested."))"
                         }
                     }
 
@@ -216,9 +224,9 @@ struct SettingsView: View {
     private func handleExport(_ result: Result<URL, Error>) {
         switch result {
         case .success:
-            transferMessage = "Exported timetable successfully."
+            transferMessage = AppLocalizer.localized("Exported timetable successfully.")
         case .failure(let error):
-            transferMessage = "Export failed: \(error.localizedDescription)"
+            transferMessage = AppLocalizer.format("Export failed: %@", error.localizedDescription)
         }
     }
 
@@ -238,12 +246,12 @@ struct SettingsView: View {
                 decoder.dateDecodingStrategy = .iso8601
                 let archive = try decoder.decode(TimetableArchive.self, from: data)
                 try importArchive(archive)
-                transferMessage = "Imported timetable successfully."
+                transferMessage = AppLocalizer.localized("Imported timetable successfully.")
             } catch {
-                transferMessage = "Import failed: \(error.localizedDescription)"
+                transferMessage = AppLocalizer.format("Import failed: %@", error.localizedDescription)
             }
         case .failure(let error):
-            transferMessage = "Import failed: \(error.localizedDescription)"
+            transferMessage = AppLocalizer.format("Import failed: %@", error.localizedDescription)
         }
     }
 
@@ -351,7 +359,7 @@ struct SettingsView: View {
 
     private func unlockDebugIfNeeded() {
         guard debugUnlockInput.trimmingCharacters(in: .whitespacesAndNewlines) == "iamng1nx" else {
-            transferMessage = "Wrong answer."
+            transferMessage = AppLocalizer.localized("Wrong answer.")
             return
         }
 

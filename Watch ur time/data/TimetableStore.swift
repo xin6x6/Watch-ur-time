@@ -27,11 +27,11 @@ enum NotificationMoment: Int, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .classBegins:
-            return "Class begins"
+            return AppLocalizer.localized("Class begins")
         case .classEnds:
-            return "Class ends"
+            return AppLocalizer.localized("Class ends")
         case .both:
-            return "Both"
+            return AppLocalizer.localized("Both")
         }
     }
 }
@@ -49,13 +49,13 @@ enum NotificationDeliveryMode: Int, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .bannerOnly:
-            return "Banner Only"
+            return AppLocalizer.localized("Banner Only")
         case .alarmOnly:
-            return "Alarm Only"
+            return AppLocalizer.localized("Alarm Only")
         case .both:
-            return "Both"
+            return AppLocalizer.localized("Both")
         case .none:
-            return "None"
+            return AppLocalizer.localized("None")
         }
     }
 
@@ -86,9 +86,9 @@ enum NotificationTimeMode: Int, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .custom:
-            return "Custom"
+            return AppLocalizer.localized("Custom")
         case .uniform:
-            return "Uniform"
+            return AppLocalizer.localized("Uniform")
         }
     }
 }

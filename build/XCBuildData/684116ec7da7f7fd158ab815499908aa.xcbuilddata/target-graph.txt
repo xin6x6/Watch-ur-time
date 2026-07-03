@@ -1,0 +1,6 @@
+Target dependency graph (3 targets)
+Target 'Watch ur time' in project 'Watch ur time'
+➜ Explicit dependency on target 'Watch ur time Widget' in project 'Watch ur time'
+➜ Explicit dependency on target 'Time on ur watch Watch App' in project 'Watch ur time'
+Target 'Time on ur watch Watch App' in project 'Watch ur time' (no dependencies)
+Target 'Watch ur time Widget' in project 'Watch ur time' (no dependencies)

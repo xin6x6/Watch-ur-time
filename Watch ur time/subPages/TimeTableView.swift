@@ -16,7 +16,7 @@ struct TimeTableView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Title(text: "Watch ur time")
+                Title(text: AppLocalizer.localized("Watch ur time"))
                 GlassCard {
                     VStack {
                         Picker(selection: $day, label: Text("Select day")) {
@@ -66,7 +66,9 @@ struct TimeTableView: View {
     }
 
     private var menuActionTitle: String {
-        stores.first?.hasTimetable == true ? "Edit Timetable" : "Add Timetable"
+        stores.first?.hasTimetable == true
+            ? AppLocalizer.localized("Edit Timetable")
+            : AppLocalizer.localized("Add Timetable")
     }
 }
 
@@ -87,7 +89,7 @@ struct DayView: View {
 
                         lessonRow(
                             timeText: slot.displayLabel,
-                            lessonText: subject?.name ?? "Free",
+                            lessonText: subject?.name ?? AppLocalizer.localized("Free"),
                             lessonSubtitle: subject?.room,
                             strokeColor: subject?.color ?? .gray,
                             fillColor: subject?.color.opacity(0.24) ?? .clear
@@ -122,8 +124,8 @@ struct DayView: View {
             ],
             spacing: 4
         ) {
-            tableCell("Time", isHeader: true)
-            tableCell("Lesson", isHeader: true)
+            tableCell(AppLocalizer.localized("Time"), isHeader: true)
+            tableCell(AppLocalizer.localized("Lesson"), isHeader: true)
         }
         .padding(.bottom, 2)
     }
@@ -249,7 +251,7 @@ struct AddTimeTable: View {
                 errorMessage = nil
             }
         } message: {
-            Text(errorMessage ?? "Unknown error")
+            Text(errorMessage ?? AppLocalizer.localized("Unknown error"))
         }
         .task {
             loadStoredTimetableIfNeeded()
@@ -266,7 +268,7 @@ struct AddTimeTable: View {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("Subject \(index + 1)")
+                            Text(AppLocalizer.format("Subject %d", index + 1))
                                 .appFont(.headline)
                             Spacer()
                             if subjectDrafts.count > 1 {
@@ -310,7 +312,7 @@ struct AddTimeTable: View {
             ScrollView(.horizontal) {
                 Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
                     GridRow {
-                        scheduleHeaderCell("Time")
+                        scheduleHeaderCell(AppLocalizer.localized("Time"))
                             .frame(width: 220)
 
                         ForEach(weekdayColumns) { column in
@@ -364,7 +366,7 @@ struct AddTimeTable: View {
         GlassCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("Period \(index + 1)")
+                    Text(AppLocalizer.format("Period %d", index + 1))
                         .appFont(.subheadline, weight: .semibold)
                     Spacer()
                     if timeSlotDrafts.count > 1 {
@@ -377,13 +379,13 @@ struct AddTimeTable: View {
                 }
 
                 timeInputRow(
-                    title: "Start",
+                    title: AppLocalizer.localized("Start"),
                     text: $timeSlotDrafts[index].startTime,
                     meridiem: $timeSlotDrafts[index].startMeridiem
                 )
 
                 timeInputRow(
-                    title: "End",
+                    title: AppLocalizer.localized("End"),
                     text: $timeSlotDrafts[index].endTime,
                     meridiem: $timeSlotDrafts[index].endMeridiem
                 )
@@ -425,7 +427,7 @@ struct AddTimeTable: View {
                 .fill(subject?.color.opacity(0.35) ?? Color.secondary.opacity(0.08))
                 .overlay {
                     VStack(spacing: 6) {
-                        Text(subject?.name ?? "Select")
+                        Text(subject?.name ?? localizedSelectTitle)
                             .appFont(.subheadline, weight: .bold)
                             .foregroundStyle(subject == nil ? .secondary : .primary)
                             .multilineTextAlignment(.center)
@@ -446,6 +448,10 @@ struct AddTimeTable: View {
                 .frame(height: 92)
         }
         .disabled(!slot.isComplete || completedSubjects.isEmpty)
+    }
+
+    private var localizedSelectTitle: String {
+        AppLocalizer.localized("Select")
     }
 
     private var canProceedToSchedule: Bool {
@@ -481,11 +487,11 @@ struct AddTimeTable: View {
 
     private var weekdayColumns: [WeekdayColumn] {
         [
-            WeekdayColumn(id: 1, title: "Mon."),
-            WeekdayColumn(id: 2, title: "Tue."),
-            WeekdayColumn(id: 3, title: "Wed."),
-            WeekdayColumn(id: 4, title: "Thu."),
-            WeekdayColumn(id: 5, title: "Fri.")
+            WeekdayColumn(id: 1, title: AppLocalizer.localized("Mon.")),
+            WeekdayColumn(id: 2, title: AppLocalizer.localized("Tue.")),
+            WeekdayColumn(id: 3, title: AppLocalizer.localized("Wed.")),
+            WeekdayColumn(id: 4, title: AppLocalizer.localized("Thu.")),
+            WeekdayColumn(id: 5, title: AppLocalizer.localized("Fri."))
         ]
     }
 
@@ -686,9 +692,9 @@ private enum AddTimeTableStep {
     var title: String {
         switch self {
         case .subjects:
-            return "Add Subjects"
+            return AppLocalizer.localized("Add Subjects")
         case .schedule:
-            return "Build Timetable"
+            return AppLocalizer.localized("Build Timetable")
         }
     }
 }

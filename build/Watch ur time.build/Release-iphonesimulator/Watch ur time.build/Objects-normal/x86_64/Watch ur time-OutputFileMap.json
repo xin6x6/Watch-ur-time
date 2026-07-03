@@ -1,0 +1,131 @@
+{
+  "" : {
+    "const-values" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary.swiftconstvalues",
+    "dependencies" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary.d",
+    "diagnostics" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary.dia",
+    "emit-module-dependencies" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary-emit-module.dia",
+    "pch" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch ur time-primary.swiftdeps"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Shared/AlarmSharedModels.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AlarmSharedModels.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AlarmSharedModels.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AlarmSharedModels.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Shared/WidgetSharedModels.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/WidgetSharedModels.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/WidgetSharedModels.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/WidgetSharedModels.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/TabNavigationView.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TabNavigationView.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TabNavigationView.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TabNavigationView.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/Watch_ur_timeApp.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch_ur_timeApp.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch_ur_timeApp.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Watch_ur_timeApp.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/AppNotificationDelegate.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppNotificationDelegate.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppNotificationDelegate.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppNotificationDelegate.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/ClassReminderScheduler.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/ClassReminderScheduler.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/ClassReminderScheduler.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/ClassReminderScheduler.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/PhoneWatchSyncManager.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/PhoneWatchSyncManager.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/PhoneWatchSyncManager.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/PhoneWatchSyncManager.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/StopClassAlarmIntent.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/StopClassAlarmIntent.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/StopClassAlarmIntent.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/StopClassAlarmIntent.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/TimetableStore.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimetableStore.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimetableStore.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimetableStore.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/TimetableTransferDocument.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimetableTransferDocument.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimetableTransferDocument.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimetableTransferDocument.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/data/WidgetSnapshotStore.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/WidgetSnapshotStore.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/WidgetSnapshotStore.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/WidgetSnapshotStore.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/localization/AppLanguage.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppLanguage.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppLanguage.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppLanguage.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/AppFont.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppFont.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppFont.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AppFont.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/AssignmentBar.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AssignmentBar.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AssignmentBar.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AssignmentBar.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/GlassButton.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassButton.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassButton.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassButton.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/GlassCard.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassCard.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassCard.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassCard.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/GlassCardNotification.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassCardNotification.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassCardNotification.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GlassCardNotification.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/Line.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Line.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Line.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Line.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/styles/Title.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Title.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Title.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/Title.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/subPages/AssignmentsView.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AssignmentsView.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AssignmentsView.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/AssignmentsView.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/subPages/NotificationView.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/NotificationView.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/NotificationView.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/NotificationView.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/subPages/SettingsView.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/SettingsView.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/SettingsView.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/SettingsView.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/Watch ur time/subPages/TimeTableView.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimeTableView.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimeTableView.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/TimeTableView.o"
+  },
+  "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/xinmouren/Documents/GithubRepos/Watch ur time/build/Watch ur time.build/Release-iphonesimulator/Watch ur time.build/Objects-normal/x86_64/GeneratedAssetSymbols.o"
+  }
+}

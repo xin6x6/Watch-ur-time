@@ -13,6 +13,7 @@ struct Watch_ur_timeApp: App {
     @UIApplicationDelegateAdaptor(AppNotificationDelegate.self) private var appDelegate
     @AppStorage("theme") private var theme: Themes = .System
     @AppStorage(AppFontOption.storageKey) private var appFontOption: AppFontOption = .apple
+    @AppStorage(AppLanguage.storageKey) private var appLanguage: AppLanguage = .system
     private var sharedModelContainer: ModelContainer
     @StateObject private var watchSyncManager: PhoneWatchSyncManager
     @StateObject private var classReminderScheduler = ClassReminderScheduler()
@@ -42,10 +43,11 @@ struct Watch_ur_timeApp: App {
     var body: some Scene {
         WindowGroup {
             TabNavigationView()
-                .id(appFontOption.rawValue)
+                .id("\(appFontOption.rawValue)-\(appLanguage.rawValue)")
                 .environmentObject(watchSyncManager)
                 .environmentObject(classReminderScheduler)
                 .environment(\.appFontOption, appFontOption)
+                .environment(\.locale, appLanguage.locale)
                 .preferredColorScheme(preferredScheme)
                 .onAppear {
                     AppControlFontStyler.apply(option: appFontOption)

@@ -8,8 +8,6 @@
 import SwiftData
 import SwiftUI
 
-var dayToString = [1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday"]
-
 struct NotificationView: View {
     @Binding var day: Int
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
@@ -56,7 +54,20 @@ struct NotificationView: View {
     }
 
     private var dayTitle: String {
-        dayToString[day] ?? "Day"
+        switch day {
+        case 1:
+            return AppLocalizer.localized("Monday")
+        case 2:
+            return AppLocalizer.localized("Tuesday")
+        case 3:
+            return AppLocalizer.localized("Wednesday")
+        case 4:
+            return AppLocalizer.localized("Thursday")
+        case 5:
+            return AppLocalizer.localized("Friday")
+        default:
+            return AppLocalizer.localized("Day")
+        }
     }
 
     private func notificationSummary(for entry: TimetableDayEntry) -> String {
@@ -72,7 +83,7 @@ struct NotificationView: View {
                 Image(systemName: "bell.slash")
                     .appFont(size: 30)
                     .foregroundStyle(.secondary)
-                Text("No classes for \(dayTitle)")
+                Text(AppLocalizer.format("No classes for %@", dayTitle))
                     .appFont(.headline)
                 Text("Create or edit your timetable first, then adjust notifications for each class here.")
                     .appFont(.subheadline)
@@ -119,7 +130,7 @@ struct AdjustNotificationView: View {
                 errorMessage = nil
             }
         } message: {
-            Text(errorMessage ?? "Unknown error")
+            Text(errorMessage ?? AppLocalizer.localized("Unknown error"))
         }
         .task {
             loadSettingIfNeeded()
@@ -167,7 +178,7 @@ struct AdjustNotificationView: View {
                 .appFont(.headline)
             Picker("In advance for", selection: $advanceTime) {
                 ForEach(advanceOptions, id: \.self) { minute in
-                    Text(minute == 0 ? "On time" : "\(minute) mins")
+                    Text(AppLocalizer.minuteSummary(minute))
                         .tag(minute)
                 }
             }
@@ -180,7 +191,7 @@ struct AdjustNotificationView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("In advance for")
                 .appFont(.headline)
-            Text("Using uniform reminder time from Settings: \(uniformAdvanceSummary)")
+            Text(AppLocalizer.format("Using uniform reminder time from Settings: %@", uniformAdvanceSummary))
                 .appFont(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -203,7 +214,7 @@ struct AdjustNotificationView: View {
 
     private var uniformAdvanceSummary: String {
         let minute = stores.first?.clampedUniformNotificationMinutesBefore ?? 2
-        return minute == 0 ? "On time" : "\(minute) mins"
+        return AppLocalizer.minuteSummary(minute)
     }
 
     private func loadSettingIfNeeded() {
@@ -259,18 +270,26 @@ private extension TimetableDayEntry {
 
         switch setting.moment {
         case .classBegins:
-            return "Notify \(notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore) ?? fallbackSummary(for: setting, minutesBefore: minutesBefore))"
+            return AppLocalizer.format(
+                "Notify %@",
+                notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore)
+                    ?? fallbackSummary(for: setting, minutesBefore: minutesBefore)
+            )
         case .classEnds:
-            return "Notify \(notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: minutesBefore) ?? fallbackSummary(for: setting, minutesBefore: minutesBefore))"
+            return AppLocalizer.format(
+                "Notify %@",
+                notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: minutesBefore)
+                    ?? fallbackSummary(for: setting, minutesBefore: minutesBefore)
+            )
         case .both:
             let startText = notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore)
             let endText = notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: minutesBefore)
 
             if let startText, let endText {
-                return "Notify \(startText) / \(endText)"
+                return AppLocalizer.format("Notify %@ / %@", startText, endText)
             }
 
-            return "Notify \(fallbackSummary(for: setting, minutesBefore: minutesBefore))"
+            return AppLocalizer.format("Notify %@", fallbackSummary(for: setting, minutesBefore: minutesBefore))
         }
     }
 
@@ -280,11 +299,11 @@ private extension TimetableDayEntry {
     ) -> String {
         switch setting.moment {
         case .classBegins:
-            return "\(minutesBefore) mins before start"
+            return AppLocalizer.format("%d mins before start", minutesBefore)
         case .classEnds:
-            return "\(minutesBefore) mins before end"
+            return AppLocalizer.format("%d mins before end", minutesBefore)
         case .both:
-            return "\(minutesBefore) mins before start & end"
+            return AppLocalizer.format("%d mins before start & end", minutesBefore)
         }
     }
 

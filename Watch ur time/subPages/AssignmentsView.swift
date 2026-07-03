@@ -15,20 +15,19 @@ struct AssignmentsView: View {
     @State private var selectedWeekStart = startOfWeek(for: Date())
     @State private var isAddingAssignment = false
     @State private var timelineScrollRequestID = UUID()
-    @State private var sheetProgress: CGFloat = 0
-    @GestureState private var sheetDragTranslation: CGFloat = 0
-    @GestureState private var isSheetDragging = false
+    @State private var drawerStop: AssignmentDrawerStop = .collapsed
+    @GestureState private var drawerDragTranslation: CGFloat = 0
 
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
-                let collapsedSheetHeight: CGFloat = 28
-                let expandedSheetHeight = max(geo.size.height - 28, collapsedSheetHeight)
-                let progress = sheetProgressValue(
-                    collapsedHeight: collapsedSheetHeight,
-                    expandedHeight: expandedSheetHeight
+                let drawerMetrics = drawerMetrics(for: geo)
+                let visibleDrawerHeight = currentDrawerHeight(for: drawerMetrics)
+                let drawerRevealProgress = revealProgress(
+                    visibleHeight: visibleDrawerHeight,
+                    metrics: drawerMetrics
                 )
 
                 ZStack(alignment: .bottom) {
@@ -48,12 +47,14 @@ struct AssignmentsView: View {
                         Spacer(minLength: 0)
                     }
 
-                    bottomSheetContent(
-                        collapsedHeight: collapsedSheetHeight,
-                        expandedHeight: expandedSheetHeight
+                    drawerView(
+                        metrics: drawerMetrics,
+                        visibleHeight: visibleDrawerHeight,
+                        revealProgress: drawerRevealProgress
                     )
-                    .padding(.horizontal, 12)
-                    .offset(y: 8)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, drawerMetrics.horizontalInset)
+                    .padding(.bottom, drawerMetrics.bottomClearance + drawerMetrics.bottomMargin)
                 }
             }
             .toolbar {
@@ -172,70 +173,61 @@ struct AssignmentsView: View {
 
     private var weekRangeLabel: String {
         guard let firstDay = weekDates.first, let lastDay = weekDates.last else {
-            return "This Week"
+            return AppLocalizer.localized("This Week")
         }
         return "\(formatDate(firstDay)) - \(formatDate(lastDay))"
     }
 
-    private func bottomSheetContent(
-        collapsedHeight: CGFloat,
-        expandedHeight: CGFloat
+    private func drawerView(
+        metrics: AssignmentDrawerMetrics,
+        visibleHeight: CGFloat,
+        revealProgress: CGFloat
     ) -> some View {
-        let progress = sheetProgressValue(
-            collapsedHeight: collapsedHeight,
-            expandedHeight: expandedHeight
-        )
-        let contentProgress = max(0, min((progress - 0.14) / 0.86, 1))
-
-        return VStack(spacing: 0) {
-            sheetHeader(progress: progress)
-                .highPriorityGesture(
-                    sheetDragGesture(
-                        collapsedHeight: collapsedHeight,
-                        expandedHeight: expandedHeight
-                    )
-                )
+        VStack(spacing: 0) {
+            drawerHeader(revealProgress: revealProgress, metrics: metrics)
 
             Group {
                 if filteredAssignments.isEmpty {
-                    sheetEmptyState
+                    drawerEmptyState
                 } else {
                     assignmentsList
                 }
             }
             .frame(maxHeight: .infinity, alignment: .top)
-            .opacity(contentProgress)
-            .allowsHitTesting(!isSheetDragging && contentProgress > 0.98)
+            .opacity(revealProgress > 0.08 ? 1 : 0)
+            .allowsHitTesting(revealProgress > 0.2)
+            .clipped()
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: collapsedHeight + (expandedHeight - collapsedHeight) * progress, alignment: .top)
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .frame(height: visibleHeight, alignment: .top)
         .background {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .opacity(progress)
+                .opacity(max(revealProgress, 0.08))
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .stroke(.white.opacity(0.12 * progress), lineWidth: 1)
+            RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
+                .stroke(.white.opacity(max(0.12, revealProgress * 0.14)), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.14 * progress), radius: 16, y: -2)
+        .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
+        .shadow(color: .black.opacity(0.14 * revealProgress), radius: 16, y: -2)
+        .transaction { transaction in
+            if drawerDragTranslation != 0 {
+                transaction.animation = nil
+            }
+        }
     }
 
-    private func sheetHeader(progress: CGFloat) -> some View {
-        let titleReveal = max(0, min((progress - 0.04) / 0.96, 1))
-        let handleAreaHeight: CGFloat = 28
+    private func drawerHeader(
+        revealProgress: CGFloat,
+        metrics: AssignmentDrawerMetrics
+    ) -> some View {
+        let titleReveal = max(0, min((revealProgress - 0.12) / 0.32, 1))
 
-        return VStack(spacing: 0) {
-            ZStack(alignment: .bottom) {
-                Color.clear
-
-                Capsule()
-                    .fill(.secondary.opacity(0.55))
-                    .frame(width: 36, height: 4)
-                    .padding(.bottom, 6)
-            }
-            .frame(height: handleAreaHeight)
+        return ZStack(alignment: .top) {
+            Capsule()
+                .fill(.secondary.opacity(0.55))
+                .frame(width: 36, height: 4)
+                .padding(.top, 6)
 
             HStack {
                 Text("Assignments")
@@ -243,16 +235,22 @@ struct AssignmentsView: View {
                 Spacer()
             }
             .padding(.horizontal, 20)
-            .frame(height: 36 * titleReveal, alignment: .bottom)
-            .padding(.bottom, 10 * titleReveal)
+            .padding(.top, 20)
             .opacity(titleReveal)
-            .clipped()
+            .offset(y: (1 - titleReveal) * 10)
         }
-        .frame(maxWidth: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity)
+        .frame(height: metrics.headerHeight, alignment: .top)
         .contentShape(Rectangle())
+        .highPriorityGesture(drawerGesture(for: metrics))
+        .onTapGesture {
+            withAnimation(drawerAnimation) {
+                drawerStop = nextDrawerStop(after: drawerStop)
+            }
+        }
     }
 
-    private var sheetEmptyState: some View {
+    private var drawerEmptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "checklist")
                 .appFont(size: 30)
@@ -269,56 +267,98 @@ struct AssignmentsView: View {
         .padding(.top, 16)
     }
 
-    private func sheetProgressValue(
-        collapsedHeight: CGFloat,
-        expandedHeight: CGFloat
-    ) -> CGFloat {
-        let travel = drawerInteractiveTravel(
-            collapsedHeight: collapsedHeight,
-            expandedHeight: expandedHeight
-        )
-        return min(max(sheetProgress - sheetDragTranslation / travel, 0), 1)
-    }
-
-    private func drawerInteractiveTravel(
-        collapsedHeight: CGFloat,
-        expandedHeight: CGFloat
-    ) -> CGFloat {
-        max(expandedHeight - collapsedHeight, 1)
-    }
-
-    private func sheetDragGesture(
-        collapsedHeight: CGFloat,
-        expandedHeight: CGFloat
-    ) -> some Gesture {
-        let travel = drawerInteractiveTravel(
-            collapsedHeight: collapsedHeight,
-            expandedHeight: expandedHeight
+    private func drawerMetrics(for geo: GeometryProxy) -> AssignmentDrawerMetrics {
+        let horizontalInset: CGFloat = 12
+        let bottomMargin: CGFloat = 8
+        let handleAreaHeight: CGFloat = 16
+        let collapsedVisibleHeight: CGFloat = 16
+        let headerHeight: CGFloat = 60
+        let tabBarClearance = max(58, geo.safeAreaInsets.bottom + 50)
+        let expandedHeight = max(geo.size.height - tabBarClearance - bottomMargin, headerHeight)
+        let middleHeight = min(
+            max(expandedHeight * 0.42, 260),
+            max(expandedHeight - 140, collapsedVisibleHeight + 120)
         )
 
-        return DragGesture()
-            .updating($isSheetDragging) { _, state, _ in
-                state = true
-            }
-            .updating($sheetDragTranslation) { value, state, _ in
+        return AssignmentDrawerMetrics(
+            expandedHeight: expandedHeight,
+            middleHeight: middleHeight,
+            handleAreaHeight: handleAreaHeight,
+            headerHeight: headerHeight,
+            collapsedVisibleHeight: collapsedVisibleHeight,
+            horizontalInset: horizontalInset,
+            bottomClearance: tabBarClearance,
+            bottomMargin: bottomMargin,
+            cornerRadius: 30
+        )
+    }
+
+    private func currentDrawerHeight(for metrics: AssignmentDrawerMetrics) -> CGFloat {
+        let baseHeight = height(for: drawerStop, metrics: metrics)
+        let proposedHeight = baseHeight - drawerDragTranslation
+        return min(max(proposedHeight, metrics.collapsedVisibleHeight), metrics.expandedHeight)
+    }
+
+    private func height(for stop: AssignmentDrawerStop, metrics: AssignmentDrawerMetrics) -> CGFloat {
+        switch stop {
+        case .collapsed:
+            metrics.collapsedVisibleHeight
+        case .middle:
+            metrics.middleHeight
+        case .expanded:
+            metrics.expandedHeight
+        }
+    }
+
+    private func revealProgress(
+        visibleHeight: CGFloat,
+        metrics: AssignmentDrawerMetrics
+    ) -> CGFloat {
+        let denominator = max(metrics.expandedHeight - metrics.collapsedVisibleHeight, 1)
+        return min(max((visibleHeight - metrics.collapsedVisibleHeight) / denominator, 0), 1)
+    }
+
+    private func nearestDrawerStop(
+        for targetHeight: CGFloat,
+        metrics: AssignmentDrawerMetrics
+    ) -> AssignmentDrawerStop {
+        AssignmentDrawerStop.allCases.min { lhs, rhs in
+            abs(height(for: lhs, metrics: metrics) - targetHeight)
+                < abs(height(for: rhs, metrics: metrics) - targetHeight)
+        } ?? .collapsed
+    }
+
+    private func nextDrawerStop(after stop: AssignmentDrawerStop) -> AssignmentDrawerStop {
+        switch stop {
+        case .collapsed:
+            .middle
+        case .middle:
+            .expanded
+        case .expanded:
+            .collapsed
+        }
+    }
+
+    private func drawerGesture(for metrics: AssignmentDrawerMetrics) -> some Gesture {
+        DragGesture(minimumDistance: 2, coordinateSpace: .global)
+            .updating($drawerDragTranslation) { value, state, _ in
                 state = value.translation.height
             }
             .onEnded { value in
-                let liveProgress = min(max(sheetProgress - value.translation.height / travel, 0), 1)
-                let projectedBoost = ((value.translation.height - value.predictedEndTranslation.height) / travel) * 0.08
-                let finalProgress = min(max(liveProgress + projectedBoost, 0), 1)
-                let targetProgress: CGFloat
+                let baseHeight = height(for: drawerStop, metrics: metrics)
+                let projectedHeight = min(
+                    max(baseHeight - value.predictedEndTranslation.height, metrics.collapsedVisibleHeight),
+                    metrics.expandedHeight
+                )
 
-                if sheetProgress > 0.5 {
-                    targetProgress = finalProgress < 0.62 ? 0 : 1
-                } else {
-                    targetProgress = finalProgress > 0.10 ? 1 : 0
-                }
-
-                withAnimation(.interactiveSpring(response: 0.22, dampingFraction: 0.94, blendDuration: 0.12)) {
-                    sheetProgress = targetProgress
+                withAnimation(drawerAnimation) {
+                    drawerStop = nearestDrawerStop(for: projectedHeight, metrics: metrics)
                 }
             }
+    }
+
+    private var drawerAnimation: Animation {
+        .interactiveSpring(response: 0.26, dampingFraction: 0.88, blendDuration: 0.1)
     }
 
     private var emptyState: some View {
@@ -345,7 +385,7 @@ struct AssignmentsView: View {
                     .appFont(.headline)
                     .strikethrough(assignment.isFinished)
                 Spacer()
-                Text("Due \(formatDate(assignment.dueDate))")
+                Text(AppLocalizer.format("Due %@", formatDate(assignment.dueDate)))
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -356,7 +396,7 @@ struct AssignmentsView: View {
                 .multilineTextAlignment(.leading)
                 .strikethrough(assignment.isFinished)
 
-            Text("Start \(formatDate(assignment.startDate))")
+            Text(AppLocalizer.format("Start %@", formatDate(assignment.startDate)))
                 .appFont(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -404,12 +444,12 @@ struct AssignmentsView: View {
                             }
                             .buttonStyle(.plain)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(assignment.isFinished ? "Mark Active" : "Set as Completed") {
+                                Button("已完成") {
                                     toggleCompletion(for: assignment)
                                 }
                                 .tint(.green)
 
-                                Button("Delete", role: .destructive) {
+                                Button("删除", role: .destructive) {
                                     deleteAssignment(assignment)
                                 }
                                 .tint(.red)
@@ -803,7 +843,11 @@ struct AddAssignmentsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(assignmentID == nil ? "Add Assignment" : "Edit Assignment")
+        .navigationTitle(
+            assignmentID == nil
+                ? AppLocalizer.localized("Add Assignment")
+                : AppLocalizer.localized("Edit Assignment")
+        )
         .navigationBarTitleDisplayMode(.inline)
         .appDefaultFont()
         .toolbar {
@@ -924,6 +968,24 @@ private struct SubjectAssignmentGroup: Identifiable {
     let lanes: [[TimetableAssignment]]
 
     var id: String { subject }
+}
+
+private enum AssignmentDrawerStop: CaseIterable {
+    case collapsed
+    case middle
+    case expanded
+}
+
+private struct AssignmentDrawerMetrics {
+    let expandedHeight: CGFloat
+    let middleHeight: CGFloat
+    let handleAreaHeight: CGFloat
+    let headerHeight: CGFloat
+    let collapsedVisibleHeight: CGFloat
+    let horizontalInset: CGFloat
+    let bottomClearance: CGFloat
+    let bottomMargin: CGFloat
+    let cornerRadius: CGFloat
 }
 
 private struct TimelineScrollOffsetKey: PreferenceKey {
