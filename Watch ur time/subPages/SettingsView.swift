@@ -51,46 +51,13 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Notification") {
-                Picker("Notify By", selection: notificationDeliveryModeBinding) {
-                    ForEach(NotificationDeliveryMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.menu)
-
-                Picker("Notify Time Using", selection: notificationTimeModeBinding) {
-                    ForEach(NotificationTimeMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.menu)
-
-                if effectiveNotificationTimeMode == .uniform {
-                    Picker("Uniform Notify Time", selection: uniformNotificationAdvanceTimeBinding) {
-                        ForEach(uniformAdvanceOptions, id: \.self) { minute in
-                            Text(minute == 0 ? "On time" : "\(minute) mins")
-                                .tag(minute)
-                        }
-                    }
-                    .pickerStyle(.wheel)
-                    .frame(height: 120)
+            Section("Do Something") {
+                Button("Export Timetable") {
+                    prepareExport()
                 }
 
-                Picker("Notify Moment Using", selection: notificationMomentModeBinding) {
-                    ForEach(NotificationMomentMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.menu)
-
-                if effectiveNotificationMomentMode == .uniform {
-                    Picker("Uniform Notify Moment", selection: uniformNotificationMomentBinding) {
-                        ForEach(NotificationMoment.allCases) { moment in
-                            Text(moment.title).tag(moment)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                Button("Import Timetable") {
+                    isImporting = true
                 }
             }
 
@@ -106,29 +73,52 @@ struct SettingsView: View {
                 .disabled(!isGlobalHapticsEnabled)
             }
 
-            Section("Do Something") {
-                Button("Export Timetable") {
-                    prepareExport()
-                }
-
-                Button("Import Timetable") {
-                    isImporting = true
-                }
-            }
-
-            Section("Watch ur Time :: Time++") {
-                Toggle("Timetable OCR Import", isOn: timetableOCRBinding)
-                    .disabled(!isRestrictionsDisabled)
-
-                Picker("Font", selection: $appFontOption) {
-                    ForEach(AppFontOption.allCases) { option in
-                        Text(option.title).tag(option)
+            Section("Notification") {
+                Picker("Notify By", selection: notificationDeliveryModeBinding) {
+                    ForEach(NotificationDeliveryMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Picker("Language", selection: $appLanguage) {
-                    ForEach(AppLanguage.allCases) { option in
+                Picker("Notify Moment Using", selection: notificationMomentModeBinding) {
+                    ForEach(NotificationMomentMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Picker("Notify Time Using", selection: notificationTimeModeBinding) {
+                    ForEach(NotificationTimeMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                if effectiveNotificationMomentMode == .uniform {
+                    Picker("Uniform Notify Moment", selection: uniformNotificationMomentBinding) {
+                        ForEach(NotificationMoment.allCases) { moment in
+                            Text(moment.title).tag(moment)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                if effectiveNotificationTimeMode == .uniform {
+                    Picker("Uniform Notify Time", selection: uniformNotificationAdvanceTimeBinding) {
+                        ForEach(uniformAdvanceOptions, id: \.self) { minute in
+                            Text(minute == 0 ? "On time" : "\(minute) mins")
+                                .tag(minute)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(height: 120)
+                }
+            }
+
+            Section("Watch ur Time :: Time++") {
+                Picker("Font", selection: $appFontOption) {
+                    ForEach(AppFontOption.allCases) { option in
                         Text(option.title).tag(option)
                     }
                 }
@@ -139,39 +129,25 @@ struct SettingsView: View {
                         .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
+
+                Picker("Language", selection: $appLanguage) {
+                    ForEach(AppLanguage.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Toggle("Timetable OCR Import", isOn: timetableOCRBinding)
+                    .disabled(!isRestrictionsDisabled)
             }
 
             if isDebugUnlocked {
                 Section("Debug") {
-                    Toggle("Disable all restrictions", isOn: $isRestrictionsDisabled)
-
                     HStack {
                         Text("Alarm Permission")
                         Spacer()
                         Text(classReminderScheduler.alarmAuthorizationDebugText())
                             .foregroundStyle(.secondary)
-                    }
-
-                    Button("Request Alarm Permission") {
-                        Task {
-                            transferMessage = await classReminderScheduler.requestAlarmAuthorizationDebug()
-                        }
-                    }
-
-                    Button("Show Alarm Auth Status") {
-                        transferMessage = classReminderScheduler.dumpAlarmAuthorizationDebug()
-                    }
-
-                    Button("Show Alarm Runtime Details") {
-                        transferMessage = classReminderScheduler.alarmRuntimeDiagnosticReport()
-                    }
-
-                    Button("Schedule Test Alarm In 1 Min") {
-                        Task {
-                            let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
-                            watchSyncManager.scheduleWatchTestReminder()
-                            transferMessage = "\(phoneResult)\n\(AppLocalizer.localized("Watch test reminder requested."))"
-                        }
                     }
 
                     Button("Clear Test Alarm", role: .destructive) {
@@ -182,8 +158,32 @@ struct SettingsView: View {
                         }
                     }
 
+                    Toggle("Disable all restrictions", isOn: $isRestrictionsDisabled)
+
                     Button("Open App Settings") {
                         classReminderScheduler.openAppSettings()
+                    }
+
+                    Button("Request Alarm Permission") {
+                        Task {
+                            transferMessage = await classReminderScheduler.requestAlarmAuthorizationDebug()
+                        }
+                    }
+
+                    Button("Schedule Test Alarm In 1 Min") {
+                        Task {
+                            let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
+                            watchSyncManager.scheduleWatchTestReminder()
+                            transferMessage = "\(phoneResult)\n\(AppLocalizer.localized("Watch test reminder requested."))"
+                        }
+                    }
+
+                    Button("Show Alarm Auth Status") {
+                        transferMessage = classReminderScheduler.dumpAlarmAuthorizationDebug()
+                    }
+
+                    Button("Show Alarm Runtime Details") {
+                        transferMessage = classReminderScheduler.alarmRuntimeDiagnosticReport()
                     }
                 }
             } else {
