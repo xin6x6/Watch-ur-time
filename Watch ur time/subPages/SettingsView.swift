@@ -23,6 +23,8 @@ struct SettingsView: View {
     @AppStorage("theme") private var themes: Themes = .System
     @AppStorage(AppFontOption.storageKey) private var appFontOption: AppFontOption = .apple
     @AppStorage(AppLanguage.storageKey) private var appLanguage: AppLanguage = .system
+    @AppStorage("timetable_ocr_enabled") private var isTimetableOCREnabled = false
+    @AppStorage("disable_all_restrictions") private var isRestrictionsDisabled = false
     @AppStorage("debug_unlocked") private var isDebugUnlocked = false
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -84,6 +86,9 @@ struct SettingsView: View {
             }
 
             Section("Watch ur Time :: Time++") {
+                Toggle("Timetable OCR Import", isOn: timetableOCRBinding)
+                    .disabled(!isRestrictionsDisabled)
+
                 Picker("Font", selection: $appFontOption) {
                     ForEach(AppFontOption.allCases) { option in
                         Text(option.title).tag(option)
@@ -107,6 +112,8 @@ struct SettingsView: View {
 
             if isDebugUnlocked {
                 Section("Debug") {
+                    Toggle("Disable all restrictions", isOn: $isRestrictionsDisabled)
+
                     HStack {
                         Text("Alarm Permission")
                         Spacer()
@@ -197,6 +204,11 @@ struct SettingsView: View {
         } message: {
             Text(transferMessage ?? "")
         }
+        .onChange(of: isRestrictionsDisabled) { _, isDisabled in
+            if !isDisabled {
+                isTimetableOCREnabled = false
+            }
+        }
     }
 
     private var transferMessageBinding: Binding<Bool> {
@@ -206,6 +218,21 @@ struct SettingsView: View {
                 if !isPresented {
                     transferMessage = nil
                 }
+            }
+        )
+    }
+
+    private var timetableOCRBinding: Binding<Bool> {
+        Binding(
+            get: {
+                isRestrictionsDisabled ? isTimetableOCREnabled : false
+            },
+            set: { newValue in
+                guard isRestrictionsDisabled else {
+                    isTimetableOCREnabled = false
+                    return
+                }
+                isTimetableOCREnabled = newValue
             }
         )
     }

@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import PhotosUI
 
 struct TimeTableView: View {
     @Binding var day: Int
@@ -189,6 +190,8 @@ struct AddTimeTable: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @AppStorage("timetable_ocr_enabled") private var isTimetableOCREnabled = false
+    @AppStorage("disable_all_restrictions") private var isRestrictionsDisabled = false
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
     @State private var step: AddTimeTableStep = .subjects
@@ -197,6 +200,12 @@ struct AddTimeTable: View {
     @State private var selectedSubjectsBySlot: [UUID: [Int: UUID]] = [:]
     @State private var didLoadStoredTimetable = false
     @State private var errorMessage: String?
+    @State private var invalidTimeField: TimeFieldFocus?
+    @State private var selectedTimetableImage: PhotosPickerItem?
+    @State private var isImportingTimetableImage = false
+    @State private var importStatusMessage: String?
+    @State private var ocrReviewContext: TimetableOCRReviewContext?
+    @FocusState private var focusedTimeField: TimeFieldFocus?
 
     var body: some View {
         ScrollView {
@@ -253,8 +262,38 @@ struct AddTimeTable: View {
         } message: {
             Text(errorMessage ?? AppLocalizer.localized("Unknown error"))
         }
+        .alert("invalid time format", isPresented: invalidTimeAlertBinding) {
+            Button("OK", role: .cancel) {
+                focusedTimeField = invalidTimeField
+                invalidTimeField = nil
+            }
+        } message: {
+            Text(AppLocalizer.localized("Please use H:MM or HH:MM."))
+        }
+        .alert("Timetable OCR Import", isPresented: importStatusBinding) {
+            Button("OK", role: .cancel) {
+                importStatusMessage = nil
+            }
+        } message: {
+            Text(importStatusMessage ?? "")
+        }
+        .onChange(of: focusedTimeField) { oldValue, newValue in
+            guard oldValue != newValue, let oldValue else {
+                return
+            }
+            validateTimeFieldIfNeeded(oldValue)
+        }
         .task {
             loadStoredTimetableIfNeeded()
+        }
+        .task(id: selectedTimetableImage) {
+            await importSelectedTimetableImageIfNeeded()
+        }
+        .sheet(item: $ocrReviewContext) { context in
+            TimetableOCRImportReviewSheet(context: context) { payload in
+                applyImportedTimetable(payload)
+                importStatusMessage = AppLocalizer.localized("Timetable image imported. Review the result and tap Next when ready.")
+            }
         }
     }
 
@@ -263,6 +302,10 @@ struct AddTimeTable: View {
             Text("Create your subjects first. Each subject needs a name, a room, and a color.")
                 .appFont(.subheadline)
                 .foregroundStyle(.secondary)
+
+            if isRestrictionsDisabled && isTimetableOCREnabled {
+                timetableOCRImportSection
+            }
 
             ForEach(subjectDrafts.indices, id: \.self) { index in
                 GlassCard {
@@ -300,6 +343,40 @@ struct AddTimeTable: View {
             }
             .buttonStyle(.plain)
             .padding(.top, 4)
+        }
+    }
+
+    private var timetableOCRImportSection: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Import timetable from image")
+                    .appFont(.headline)
+
+                Text("Pick a timetable screenshot or photo. The app will OCR the image and prefill subjects, rooms, time slots, and weekly classes.")
+                    .appFont(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                PhotosPicker(
+                    selection: $selectedTimetableImage,
+                    matching: .images,
+                    photoLibrary: .shared()
+                ) {
+                    HStack(spacing: 10) {
+                        if isImportingTimetableImage {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "text.viewfinder")
+                        }
+
+                        Text(isImportingTimetableImage ? "Importing..." : "Recognize Timetable Image")
+                            .appFont(.headline)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                }
+                .disabled(isImportingTimetableImage)
+            }
         }
     }
 
@@ -381,13 +458,15 @@ struct AddTimeTable: View {
                 timeInputRow(
                     title: AppLocalizer.localized("Start"),
                     text: $timeSlotDrafts[index].startTime,
-                    meridiem: $timeSlotDrafts[index].startMeridiem
+                    meridiem: $timeSlotDrafts[index].startMeridiem,
+                    focus: TimeFieldFocus(slotID: timeSlotDrafts[index].id, kind: .start)
                 )
 
                 timeInputRow(
                     title: AppLocalizer.localized("End"),
                     text: $timeSlotDrafts[index].endTime,
-                    meridiem: $timeSlotDrafts[index].endMeridiem
+                    meridiem: $timeSlotDrafts[index].endMeridiem,
+                    focus: TimeFieldFocus(slotID: timeSlotDrafts[index].id, kind: .end)
                 )
             }
         }
@@ -396,20 +475,24 @@ struct AddTimeTable: View {
     private func timeInputRow(
         title: String,
         text: Binding<String>,
-        meridiem: Binding<TimeMeridiem>
+        meridiem: Binding<TimeMeridiem>,
+        focus: TimeFieldFocus
     ) -> some View {
         HStack(spacing: 8) {
             TextField(title, text: text)
                 .keyboardType(.numbersAndPunctuation)
+                .focused($focusedTimeField, equals: focus)
 
-            Picker("\(title) meridiem", selection: meridiem) {
-                ForEach(TimeMeridiem.allCases) { option in
-                    Text(option.rawValue).tag(option)
+            if shouldShowMeridiemPicker(for: text.wrappedValue) {
+                Picker("\(title) meridiem", selection: meridiem) {
+                    ForEach(TimeMeridiem.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
                 }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(width: 88)
             }
-            .labelsHidden()
-            .pickerStyle(.segmented)
-            .frame(width: 88)
         }
     }
 
@@ -417,6 +500,10 @@ struct AddTimeTable: View {
         let subject = selectedSubject(for: slot.id, dayIndex: dayIndex)
 
         return Menu {
+            Button(AppLocalizer.localized("No Course")) {
+                clearSelectedSubject(for: slot.id, dayIndex: dayIndex)
+            }
+
             ForEach(completedSubjects) { subject in
                 Button("\(subject.name) · \(subject.room)") {
                     setSelectedSubject(subject.id, for: slot.id, dayIndex: dayIndex)
@@ -506,6 +593,28 @@ struct AddTimeTable: View {
         )
     }
 
+    private var invalidTimeAlertBinding: Binding<Bool> {
+        Binding(
+            get: { invalidTimeField != nil },
+            set: { isPresented in
+                if !isPresented {
+                    invalidTimeField = nil
+                }
+            }
+        )
+    }
+
+    private var importStatusBinding: Binding<Bool> {
+        Binding(
+            get: { importStatusMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    importStatusMessage = nil
+                }
+            }
+        )
+    }
+
     private func handleBack() {
         if step == .schedule {
             step = .subjects
@@ -536,6 +645,17 @@ struct AddTimeTable: View {
         var selections = selectedSubjectsBySlot[slotID] ?? [:]
         selections[dayIndex] = subjectID
         selectedSubjectsBySlot[slotID] = selections
+    }
+
+    private func clearSelectedSubject(for slotID: UUID, dayIndex: Int) {
+        var selections = selectedSubjectsBySlot[slotID] ?? [:]
+        selections.removeValue(forKey: dayIndex)
+
+        if selections.isEmpty {
+            selectedSubjectsBySlot.removeValue(forKey: slotID)
+        } else {
+            selectedSubjectsBySlot[slotID] = selections
+        }
     }
 
     private func selectedSubject(for slotID: UUID, dayIndex: Int) -> TimetableSubject? {
@@ -582,6 +702,92 @@ struct AddTimeTable: View {
             selectionMap[slotID] = daySelections
         }
         selectedSubjectsBySlot = selectionMap
+    }
+
+    private func importSelectedTimetableImageIfNeeded() async {
+        guard let selectedTimetableImage else {
+            return
+        }
+
+        isImportingTimetableImage = true
+        defer {
+            isImportingTimetableImage = false
+            self.selectedTimetableImage = nil
+        }
+
+        do {
+            guard let data = try await selectedTimetableImage.loadTransferable(type: Data.self) else {
+                throw TimetableOCRImportError.imageDecodeFailed
+            }
+
+            switch try await TimetableOCRImporter.importTimetable(from: data) {
+            case .direct(let payload):
+                applyImportedTimetable(payload)
+                importStatusMessage = AppLocalizer.localized("Timetable image imported. Review the result and tap Next when ready.")
+            case .needsReview(let context):
+                ocrReviewContext = context
+            }
+        } catch {
+            importStatusMessage = error.localizedDescription
+        }
+    }
+
+    private func applyImportedTimetable(_ payload: ImportedTimetablePayload) {
+        subjectDrafts = payload.subjects.isEmpty
+            ? [SubjectDraft()]
+            : payload.subjects.map { SubjectDraft(subject: $0) }
+
+        timeSlotDrafts = payload.slots.isEmpty
+            ? [TimeSlotDraft()]
+            : payload.slots.map { TimeSlotDraft(slot: $0) }
+
+        var selectionMap: [UUID: [Int: UUID]] = [:]
+        for placement in payload.placements {
+            guard payload.slots.indices.contains(placement.slotIndex) else {
+                continue
+            }
+
+            let slotID = payload.slots[placement.slotIndex].id
+            var daySelections = selectionMap[slotID] ?? [:]
+            daySelections[placement.dayIndex] = placement.subjectID
+            selectionMap[slotID] = daySelections
+        }
+        selectedSubjectsBySlot = selectionMap
+        step = .subjects
+    }
+
+    private func validateTimeFieldIfNeeded(_ focus: TimeFieldFocus) {
+        guard let slotIndex = timeSlotDrafts.firstIndex(where: { $0.id == focus.slotID }) else {
+            return
+        }
+
+        let rawText = switch focus.kind {
+        case .start:
+            timeSlotDrafts[slotIndex].startTime
+        case .end:
+            timeSlotDrafts[slotIndex].endTime
+        }
+
+        let trimmed = rawText.trimmed
+        guard !trimmed.isEmpty else {
+            return
+        }
+
+        guard TimeSlotDraft.isValidTimeFormat(trimmed) else {
+            invalidTimeField = focus
+            return
+        }
+    }
+
+    private func shouldShowMeridiemPicker(for timeText: String) -> Bool {
+        guard let components = TimeSlotDraft.timeComponents(from: timeText.trimmed),
+              components.hour >= 1,
+              components.hour <= 12
+        else {
+            return false
+        }
+
+        return true
     }
 
     private func persistSubjectsAndContinue() {
@@ -704,6 +910,16 @@ private struct WeekdayColumn: Identifiable {
     let title: String
 }
 
+private enum TimeFieldKind: Hashable {
+    case start
+    case end
+}
+
+private struct TimeFieldFocus: Hashable {
+    let slotID: UUID
+    let kind: TimeFieldKind
+}
+
 private struct SubjectDraft: Identifiable {
     var id: UUID
     var name: String
@@ -774,7 +990,38 @@ private struct TimeSlotDraft: Identifiable {
     }
 
     var isComplete: Bool {
-        !startTime.trimmed.isEmpty && !endTime.trimmed.isEmpty
+        !startTime.trimmed.isEmpty &&
+        !endTime.trimmed.isEmpty &&
+        Self.isValidTimeFormat(startTime.trimmed) &&
+        Self.isValidTimeFormat(endTime.trimmed)
+    }
+
+    static func isValidTimeFormat(_ text: String) -> Bool {
+        guard let components = timeComponents(from: text) else {
+            return false
+        }
+
+        return components.hour >= 0 &&
+            components.hour <= 23 &&
+            components.minute >= 0 &&
+            components.minute <= 59
+    }
+
+    static func timeComponents(from text: String) -> (hour: Int, minute: Int)? {
+        let trimmed = text.trimmed
+        let parts = trimmed.split(separator: ":")
+
+        guard parts.count == 2,
+              parts[0].count >= 1,
+              parts[0].count <= 2,
+              parts[1].count == 2,
+              let hour = Int(parts[0]),
+              let minute = Int(parts[1])
+        else {
+            return nil
+        }
+
+        return (hour, minute)
     }
 }
 
