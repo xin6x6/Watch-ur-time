@@ -219,7 +219,8 @@ struct AddTimeTable: View {
                     scheduleEntrySection
                 }
             }
-            .padding()
+            .padding(.vertical)
+            .padding(.horizontal, step == .subjects ? 16 : 0)
         }
         .navigationTitle(step.title)
         .navigationBarTitleDisplayMode(.inline)
@@ -421,6 +422,7 @@ struct AddTimeTable: View {
                     }
                 }
                 .padding(.vertical, 4)
+                .padding(.horizontal, 8)
             }
 
             Button {
