@@ -61,6 +61,11 @@ enum WatchNotificationTimeMode: Int, Codable {
     case uniform
 }
 
+enum WatchNotificationMomentMode: Int, Codable {
+    case custom
+    case uniform
+}
+
 struct WatchTimetableSubject: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
@@ -211,7 +216,9 @@ struct WatchTimetableStoreSnapshot: Codable {
     var updatedAt: Date
     var notificationDeliveryMode: WatchNotificationDeliveryMode
     var notificationTimeMode: WatchNotificationTimeMode
+    var notificationMomentMode: WatchNotificationMomentMode
     var uniformNotificationMinutesBefore: Int
+    var uniformNotificationMoment: WatchNotificationMoment
     var subjects: [WatchTimetableSubject]
     var slots: [WatchTimetableTimeSlot]
     var placements: [WatchTimetablePlacement]
@@ -222,7 +229,9 @@ struct WatchTimetableStoreSnapshot: Codable {
         case updatedAt
         case notificationDeliveryMode
         case notificationTimeMode
+        case notificationMomentMode
         case uniformNotificationMinutesBefore
+        case uniformNotificationMoment
         case subjects
         case slots
         case placements
@@ -234,7 +243,9 @@ struct WatchTimetableStoreSnapshot: Codable {
         updatedAt: Date,
         notificationDeliveryMode: WatchNotificationDeliveryMode,
         notificationTimeMode: WatchNotificationTimeMode,
+        notificationMomentMode: WatchNotificationMomentMode,
         uniformNotificationMinutesBefore: Int,
+        uniformNotificationMoment: WatchNotificationMoment,
         subjects: [WatchTimetableSubject],
         slots: [WatchTimetableTimeSlot],
         placements: [WatchTimetablePlacement],
@@ -244,7 +255,9 @@ struct WatchTimetableStoreSnapshot: Codable {
         self.updatedAt = updatedAt
         self.notificationDeliveryMode = notificationDeliveryMode
         self.notificationTimeMode = notificationTimeMode
+        self.notificationMomentMode = notificationMomentMode
         self.uniformNotificationMinutesBefore = min(max(uniformNotificationMinutesBefore, 0), 60)
+        self.uniformNotificationMoment = uniformNotificationMoment
         self.subjects = subjects
         self.slots = slots
         self.placements = placements
@@ -263,10 +276,18 @@ struct WatchTimetableStoreSnapshot: Codable {
             WatchNotificationTimeMode.self,
             forKey: .notificationTimeMode
         ) ?? .custom
+        notificationMomentMode = try container.decodeIfPresent(
+            WatchNotificationMomentMode.self,
+            forKey: .notificationMomentMode
+        ) ?? .custom
         uniformNotificationMinutesBefore = min(
             max(try container.decodeIfPresent(Int.self, forKey: .uniformNotificationMinutesBefore) ?? 2, 0),
             60
         )
+        uniformNotificationMoment = try container.decodeIfPresent(
+            WatchNotificationMoment.self,
+            forKey: .uniformNotificationMoment
+        ) ?? .classEnds
         subjects = try container.decode([WatchTimetableSubject].self, forKey: .subjects)
         slots = try container.decode([WatchTimetableTimeSlot].self, forKey: .slots)
         placements = try container.decode([WatchTimetablePlacement].self, forKey: .placements)
@@ -278,7 +299,9 @@ struct WatchTimetableStoreSnapshot: Codable {
         updatedAt: .now,
         notificationDeliveryMode: .both,
         notificationTimeMode: .custom,
+        notificationMomentMode: .custom,
         uniformNotificationMinutesBefore: 2,
+        uniformNotificationMoment: .classEnds,
         subjects: [],
         slots: [],
         placements: [],

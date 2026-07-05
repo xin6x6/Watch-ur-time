@@ -37,6 +37,7 @@ struct SettingsView: View {
     @State private var transferMessage: String?
     @State private var debugUnlockInput = ""
     @State private var uniformNotificationAdvanceTime = 2
+    @State private var uniformNotificationMoment = NotificationMoment.classEnds
 
     private let uniformAdvanceOptions = Array(0...60)
 
@@ -74,6 +75,22 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.wheel)
                     .frame(height: 120)
+                }
+
+                Picker("Notify Moment Using", selection: notificationMomentModeBinding) {
+                    ForEach(NotificationMomentMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                if effectiveNotificationMomentMode == .uniform {
+                    Picker("Uniform Notify Moment", selection: uniformNotificationMomentBinding) {
+                        ForEach(NotificationMoment.allCases) { moment in
+                            Text(moment.title).tag(moment)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
             }
 
@@ -394,8 +411,59 @@ struct SettingsView: View {
         )
     }
 
+    private var notificationMomentModeBinding: Binding<NotificationMomentMode> {
+        Binding(
+            get: {
+                stores.first?.notificationMomentMode ?? .custom
+            },
+            set: { newValue in
+                let targetStore = stores.first ?? TimetableStore()
+
+                if stores.isEmpty {
+                    modelContext.insert(targetStore)
+                }
+
+                targetStore.notificationMomentMode = newValue
+                try? modelContext.save()
+                watchSyncManager.pushLatestSnapshotIfPossible()
+
+                Task {
+                    await classReminderScheduler.sync(with: targetStore.snapshot)
+                }
+            }
+        )
+    }
+
+    private var uniformNotificationMomentBinding: Binding<NotificationMoment> {
+        Binding(
+            get: {
+                stores.first?.uniformNotificationMoment ?? .classEnds
+            },
+            set: { newValue in
+                let targetStore = stores.first ?? TimetableStore()
+
+                if stores.isEmpty {
+                    modelContext.insert(targetStore)
+                }
+
+                targetStore.uniformNotificationMoment = newValue
+                uniformNotificationMoment = newValue
+                try? modelContext.save()
+                watchSyncManager.pushLatestSnapshotIfPossible()
+
+                Task {
+                    await classReminderScheduler.sync(with: targetStore.snapshot)
+                }
+            }
+        )
+    }
+
     private var effectiveNotificationTimeMode: NotificationTimeMode {
         stores.first?.notificationTimeMode ?? .custom
+    }
+
+    private var effectiveNotificationMomentMode: NotificationMomentMode {
+        stores.first?.notificationMomentMode ?? .custom
     }
 
     private func unlockDebugIfNeeded() {

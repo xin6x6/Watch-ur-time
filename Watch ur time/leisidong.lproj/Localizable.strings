@@ -103,6 +103,9 @@
 "None" = "无";
 "Custom" = "自定义";
 "Uniform" = "统一";
+"Notify Moment Using" = "通知时机方式";
+"Uniform Notify Moment" = "统一通知时机";
+"Using uniform reminder moment from Settings: %@" = "当前使用设置中的统一通知时机：%@";
 "Show" = "显示";
 "All" = "全部";
 "This Week" = "本周";

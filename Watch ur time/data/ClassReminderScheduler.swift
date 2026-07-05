@@ -370,12 +370,15 @@ final class ClassReminderScheduler: ObservableObject {
             let minutesBefore = snapshot.notificationTimeMode == .uniform
                 ? snapshot.uniformNotificationMinutesBefore
                 : setting.minutesBefore
+            let moment = snapshot.notificationMomentMode == .uniform
+                ? snapshot.uniformNotificationMoment
+                : setting.moment
 
             return events(
                 for: placement,
                 slot: slot,
                 subject: subject,
-                setting: setting,
+                moment: moment,
                 minutesBefore: minutesBefore
             )
         }
@@ -385,12 +388,12 @@ final class ClassReminderScheduler: ObservableObject {
         for placement: TimetablePlacement,
         slot: TimetableTimeSlot,
         subject: TimetableSubject,
-        setting: TimetableNotificationSetting,
+        moment: NotificationMoment,
         minutesBefore: Int
     ) -> [ScheduledClassReminder] {
         var reminders: [ScheduledClassReminder] = []
 
-        switch setting.moment {
+        switch moment {
         case .classBegins:
             if let reminder = reminder(
                 eventKind: .start,

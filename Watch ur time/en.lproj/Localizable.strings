@@ -130,6 +130,9 @@
 "None" = "None";
 "Custom" = "Custom";
 "Uniform" = "Uniform";
+"Notify Moment Using" = "Notify Moment Using";
+"Uniform Notify Moment" = "Uniform Notify Moment";
+"Using uniform reminder moment from Settings: %@" = "Using uniform reminder moment from Settings: %@";
 "Show" = "Show";
 "All" = "All";
 "This Week" = "This Week";

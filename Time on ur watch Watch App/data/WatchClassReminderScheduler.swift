@@ -133,12 +133,15 @@ final class WatchClassReminderScheduler {
             let minutesBefore = snapshot.notificationTimeMode == .uniform
                 ? snapshot.uniformNotificationMinutesBefore
                 : setting.minutesBefore
+            let moment = snapshot.notificationMomentMode == .uniform
+                ? snapshot.uniformNotificationMoment
+                : setting.moment
 
             return reminders(
                 for: placement,
                 slot: slot,
                 subject: subject,
-                setting: setting,
+                moment: moment,
                 minutesBefore: minutesBefore
             )
         }
@@ -148,10 +151,10 @@ final class WatchClassReminderScheduler {
         for placement: WatchTimetablePlacement,
         slot: WatchTimetableTimeSlot,
         subject: WatchTimetableSubject,
-        setting: WatchTimetableNotificationSetting,
+        moment: WatchNotificationMoment,
         minutesBefore: Int
     ) -> [WatchScheduledClassReminder] {
-        switch setting.moment {
+        switch moment {
         case .classBegins:
             return [makeReminder(
                 eventKind: .start,

@@ -72,7 +72,9 @@ struct NotificationView: View {
     private func notificationSummary(for entry: TimetableDayEntry) -> String {
         entry.notificationSummary(
             timeMode: store?.notificationTimeMode ?? .custom,
-            uniformMinutesBefore: store?.clampedUniformNotificationMinutesBefore ?? 2
+            uniformMinutesBefore: store?.clampedUniformNotificationMinutesBefore ?? 2,
+            momentMode: store?.notificationMomentMode ?? .custom,
+            uniformMoment: store?.uniformNotificationMoment ?? .classEnds
         )
     }
 
@@ -111,7 +113,11 @@ struct AdjustNotificationView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 headerSection
-                momentSection
+                if isUsingUniformMoment {
+                    uniformMomentInfoSection
+                } else {
+                    momentSection
+                }
                 if isUsingUniformTime {
                     uniformInfoSection
                 } else {
@@ -198,6 +204,16 @@ struct AdjustNotificationView: View {
         }
     }
 
+    private var uniformMomentInfoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("At")
+                .appFont(.headline)
+            Text(AppLocalizer.format("Using uniform reminder moment from Settings: %@", uniformMomentSummary))
+                .appFont(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private var errorBinding: Binding<Bool> {
         Binding(
             get: { errorMessage != nil },
@@ -213,9 +229,17 @@ struct AdjustNotificationView: View {
         stores.first?.notificationTimeMode == .uniform
     }
 
+    private var isUsingUniformMoment: Bool {
+        stores.first?.notificationMomentMode == .uniform
+    }
+
     private var uniformAdvanceSummary: String {
         let minute = stores.first?.clampedUniformNotificationMinutesBefore ?? 2
         return AppLocalizer.minuteSummary(minute)
+    }
+
+    private var uniformMomentSummary: String {
+        (stores.first?.uniformNotificationMoment ?? .classEnds).title
     }
 
     private func loadSettingIfNeeded() {
@@ -264,23 +288,26 @@ private extension TimetableDayEntry {
 
     func notificationSummary(
         timeMode: NotificationTimeMode,
-        uniformMinutesBefore: Int
+        uniformMinutesBefore: Int,
+        momentMode: NotificationMomentMode,
+        uniformMoment: NotificationMoment
     ) -> String {
         let setting = effectiveNotificationSetting
         let minutesBefore = timeMode == .uniform ? uniformMinutesBefore : setting.minutesBefore
+        let moment = momentMode == .uniform ? uniformMoment : setting.moment
 
-        switch setting.moment {
+        switch moment {
         case .classBegins:
             return AppLocalizer.format(
                 "Notify %@",
                 notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore)
-                    ?? fallbackSummary(for: setting, minutesBefore: minutesBefore)
+                    ?? fallbackSummary(for: moment, minutesBefore: minutesBefore)
             )
         case .classEnds:
             return AppLocalizer.format(
                 "Notify %@",
                 notificationTime(from: slot.endTime, meridiem: slot.endMeridiem, minutesBefore: minutesBefore)
-                    ?? fallbackSummary(for: setting, minutesBefore: minutesBefore)
+                    ?? fallbackSummary(for: moment, minutesBefore: minutesBefore)
             )
         case .both:
             let startText = notificationTime(from: slot.startTime, meridiem: slot.startMeridiem, minutesBefore: minutesBefore)
@@ -290,15 +317,15 @@ private extension TimetableDayEntry {
                 return AppLocalizer.format("Notify %@ / %@", startText, endText)
             }
 
-            return AppLocalizer.format("Notify %@", fallbackSummary(for: setting, minutesBefore: minutesBefore))
+            return AppLocalizer.format("Notify %@", fallbackSummary(for: moment, minutesBefore: minutesBefore))
         }
     }
 
     private func fallbackSummary(
-        for setting: TimetableNotificationSetting,
+        for moment: NotificationMoment,
         minutesBefore: Int
     ) -> String {
-        switch setting.moment {
+        switch moment {
         case .classBegins:
             return AppLocalizer.format("%d mins before start", minutesBefore)
         case .classEnds:
