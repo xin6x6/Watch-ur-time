@@ -32,20 +32,31 @@ struct AssignmentsView: View {
                     visibleHeight: visibleDrawerHeight,
                     metrics: drawerMetrics
                 )
+                let primaryContentHeight = max(
+                    geo.size.height
+                        - drawerMetrics.bottomClearance
+                        - drawerMetrics.bottomMargin
+                        - visibleDrawerHeight,
+                    0
+                )
 
                 ZStack(alignment: .bottom) {
                     VStack(spacing: 0) {
-                        GlassCard {
-                            VStack(alignment: .leading, spacing: 16) {
-                                controlsRow
-                                weekSummary
-                                BarAssignmentsView(
-                                    assignments: weekAssignments,
-                                    visibleWeekStart: $selectedWeekStart,
-                                    scrollRequestID: timelineScrollRequestID,
-                                    subjectColor: assignmentColor(for:)
-                                )
+                        if primaryContentHeight > 0 {
+                            GlassCard {
+                                VStack(alignment: .leading, spacing: 16) {
+                                    controlsRow
+                                    weekSummary
+                                    BarAssignmentsView(
+                                        assignments: weekAssignments,
+                                        visibleWeekStart: $selectedWeekStart,
+                                        scrollRequestID: timelineScrollRequestID,
+                                        subjectColor: assignmentColor(for:)
+                                    )
+                                    .frame(maxHeight: .infinity, alignment: .top)
+                                }
                             }
+                            .frame(height: primaryContentHeight, alignment: .top)
                         }
                         Spacer(minLength: 0)
                     }
@@ -614,7 +625,7 @@ struct BarAssignmentsView: View {
                     updateVisibleWeek(for: offset, columnWidth: columnWidth, viewportWidth: geo.size.width)
                 }
             }
-            .frame(height: chartHeight + 34)
+            .frame(minHeight: chartHeight + 34, maxHeight: .infinity)
         }
     }
 
