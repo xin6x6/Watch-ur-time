@@ -253,6 +253,7 @@ struct AssignmentsView: View {
         .contentShape(Rectangle())
         .highPriorityGesture(drawerGesture(for: metrics))
         .onTapGesture {
+            AppHaptics.trigger(.selection)
             withAnimation(drawerAnimation) {
                 drawerStop = nextDrawerStop(after: drawerStop)
             }
@@ -376,6 +377,7 @@ struct AssignmentsView: View {
                 )
                 let targetStop = nearestDrawerStop(for: projectedHeight, metrics: metrics)
 
+                AppHaptics.trigger(.selection)
                 withAnimation(drawerAnimation) {
                     drawerStop = targetStop
                     interactiveDrawerHeight = nil
@@ -1149,10 +1151,12 @@ private struct SwipeableAssignmentRow<Content: View>: View {
                         return
                     }
                     if settledOffset < -8 {
+                        AppHaptics.trigger(.selection)
                         withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.9)) {
                             settledOffset = 0
                         }
                     } else {
+                        AppHaptics.trigger(.tap)
                         onTap()
                     }
                 }
@@ -1198,6 +1202,7 @@ private struct SwipeableAssignmentRow<Content: View>: View {
                         0
                     )
 
+                    AppHaptics.trigger(.selection)
                     withAnimation(.interactiveSpring(response: 0.24, dampingFraction: 0.9)) {
                         settledOffset = projectedOffset < -(actionWidth * 0.9) ? -totalActionWidth : 0
                     }
@@ -1224,6 +1229,11 @@ private struct SwipeableAssignmentRow<Content: View>: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                AppHaptics.trigger(.tap)
+            }
+        )
         .frame(width: width)
         .frame(maxHeight: .infinity)
         .background(color)

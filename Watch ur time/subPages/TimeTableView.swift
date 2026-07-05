@@ -29,7 +29,6 @@ struct TimeTableView: View {
                         }
                         .pickerStyle(.segmented)
                         .padding(.bottom, 20)
-                        .sensoryFeedback(.selection, trigger: day)
                         .shadow(radius: 10)
 
                         DayView(selectedDay: day)
@@ -48,6 +47,7 @@ struct TimeTableView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
+                            AppHaptics.trigger(.tap)
                             isAddingTimetable = true
                         } label: {
                             Label(menuActionTitle, systemImage: "calendar")
@@ -64,6 +64,9 @@ struct TimeTableView: View {
         }
         .appDefaultFont()
         .tint(.primary)
+        .onChange(of: day) { _, _ in
+            AppHaptics.trigger(.selection)
+        }
     }
 
     private var menuActionTitle: String {
@@ -225,6 +228,7 @@ struct AddTimeTable: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
+                    AppHaptics.trigger(.tap)
                     handleBack()
                 } label: {
                     Label("Back", systemImage: "chevron.left")
@@ -242,6 +246,7 @@ struct AddTimeTable: View {
         .safeAreaInset(edge: .bottom) {
             if step == .subjects && canProceedToSchedule {
                 Button {
+                    AppHaptics.trigger(.tap)
                     persistSubjectsAndContinue()
                 } label: {
                     Text("Next")
@@ -316,6 +321,7 @@ struct AddTimeTable: View {
                             Spacer()
                             if subjectDrafts.count > 1 {
                                 Button(role: .destructive) {
+                                    AppHaptics.trigger(.warning)
                                     removeSubject(at: index)
                                 } label: {
                                     Image(systemName: "trash")
@@ -335,6 +341,7 @@ struct AddTimeTable: View {
             }
 
             Button {
+                AppHaptics.trigger(.tap)
                 subjectDrafts.append(SubjectDraft())
             } label: {
                 Label("Add Subject", systemImage: "plus.circle.fill")
@@ -448,6 +455,7 @@ struct AddTimeTable: View {
                     Spacer()
                     if timeSlotDrafts.count > 1 {
                         Button(role: .destructive) {
+                            AppHaptics.trigger(.warning)
                             removeTimeSlot(at: index)
                         } label: {
                             Image(systemName: "minus.circle.fill")
@@ -501,11 +509,13 @@ struct AddTimeTable: View {
 
         return Menu {
             Button(AppLocalizer.localized("No Course")) {
+                AppHaptics.trigger(.tap)
                 clearSelectedSubject(for: slot.id, dayIndex: dayIndex)
             }
 
             ForEach(completedSubjects) { subject in
                 Button("\(subject.name) · \(subject.room)") {
+                    AppHaptics.trigger(.tap)
                     setSelectedSubject(subject.id, for: slot.id, dayIndex: dayIndex)
                 }
             }

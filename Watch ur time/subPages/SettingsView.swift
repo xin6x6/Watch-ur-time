@@ -25,6 +25,8 @@ struct SettingsView: View {
     @AppStorage(AppLanguage.storageKey) private var appLanguage: AppLanguage = .system
     @AppStorage("timetable_ocr_enabled") private var isTimetableOCREnabled = false
     @AppStorage("disable_all_restrictions") private var isRestrictionsDisabled = false
+    @AppStorage(AppHaptics.enabledKey) private var isGlobalHapticsEnabled = true
+    @AppStorage(AppHapticStrength.storageKey) private var globalHapticStrength: AppHapticStrength = .medium
     @AppStorage("debug_unlocked") private var isDebugUnlocked = false
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -73,6 +75,18 @@ struct SettingsView: View {
                     .pickerStyle(.wheel)
                     .frame(height: 120)
                 }
+            }
+
+            Section("Haptics and Sound") {
+                Toggle("Haptic Feedback", isOn: $isGlobalHapticsEnabled)
+
+                Picker("Haptic Strength", selection: $globalHapticStrength) {
+                    ForEach(AppHapticStrength.allCases) { strength in
+                        Text(strength.title).tag(strength)
+                    }
+                }
+                .pickerStyle(.menu)
+                .disabled(!isGlobalHapticsEnabled)
             }
 
             Section("Do Something") {

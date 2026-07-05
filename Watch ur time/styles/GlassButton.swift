@@ -13,6 +13,7 @@ struct GlassButton: View {
     
     var body: some View {
         Button {
+            AppHaptics.trigger(.tap)
             action()
         } label: {
             

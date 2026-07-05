@@ -1,5 +1,6 @@
 "Timetable" = "Timetable";
 "Notification" = "Notification";
+"Haptics and Sound" = "Haptics and Sound";
 "Assignments" = "Assignments";
 "Settings" = "Settings";
 "Appearance" = "Appearance";
@@ -7,6 +8,11 @@
 "Lights On!" = "Lights On!";
 "Lights Off!" = "Lights Off!";
 "Notify By" = "Notify By";
+"Haptic Feedback" = "Haptic Feedback";
+"Haptic Strength" = "Haptic Strength";
+"Weak" = "Weak";
+"Medium" = "Medium";
+"Strong" = "Strong";
 "Notify Time Using" = "Notify Time Using";
 "Uniform Notify Time" = "Uniform Notify Time";
 "Do Something" = "Do Something";

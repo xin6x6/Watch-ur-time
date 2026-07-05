@@ -1,5 +1,6 @@
 "Timetable" = "课程表";
 "Notification" = "通知";
+"Haptics and Sound" = "震动与声音";
 "Assignments" = "作业";
 "Settings" = "设置";
 "Appearance" = "外观";
@@ -7,6 +8,11 @@
 "Lights On!" = "开灯!";
 "Lights Off!" = "关灯!";
 "Notify By" = "通知方式";
+"Haptic Feedback" = "震动反馈";
+"Haptic Strength" = "震动强度";
+"Weak" = "弱";
+"Medium" = "中";
+"Strong" = "强";
 "Notify Time Using" = "提醒时间方式";
 "Uniform Notify Time" = "统一提醒时间";
 "Do Something" = "操作";

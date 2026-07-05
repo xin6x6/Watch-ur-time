@@ -83,6 +83,9 @@ struct TabNavigationView: View {
         .onChange(of: stores.first?.updatedAt) { _, _ in
             syncSharedOutputs()
         }
+        .onChange(of: tabSelection) { _, _ in
+            AppHaptics.trigger(.selection)
+        }
     }
 
     private func syncDayWithCurrentWeekday() {

@@ -68,12 +68,14 @@ struct TimetableOCRImportReviewSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
+                        AppHaptics.trigger(.tap)
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Import") {
+                        AppHaptics.trigger(.success)
                         confirmImport()
                     }
                     .disabled(filteredPayload == nil)

@@ -37,8 +37,7 @@ struct NotificationView: View {
                 .padding(.vertical, 4)
             }
             .simultaneousGesture(TapGesture().onEnded { _ in
-                UIImpactFeedbackGenerator(style: .heavy)
-                    .impactOccurred()
+                AppHaptics.trigger(.tap)
             })
         }
         .appDefaultFont()
@@ -136,9 +135,11 @@ struct AdjustNotificationView: View {
             loadSettingIfNeeded()
         }
         .onChange(of: selectedMoment) { _, _ in
+            AppHaptics.trigger(.selection)
             saveNotificationSetting()
         }
         .onChange(of: advanceTime) { _, _ in
+            AppHaptics.trigger(.selection)
             saveNotificationSetting()
         }
     }
