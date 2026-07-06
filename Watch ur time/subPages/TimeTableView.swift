@@ -401,23 +401,10 @@ struct AddTimeTable: View {
     }
 
     private var scheduleEntrySection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Add each class period first, then fill the classes you actually have. Empty cells stay free.")
                 .appFont(.subheadline)
                 .foregroundStyle(.secondary)
-
-            HStack {
-                Spacer()
-
-                Button {
-                    AppHaptics.trigger(.tap)
-                    scheduleZoomResetToken = UUID()
-                } label: {
-                    Label("Reset Zoom", systemImage: "arrow.counterclockwise")
-                        .appFont(.subheadline, weight: .semibold)
-                }
-                .buttonStyle(.plain)
-            }
 
             ZoomableScheduleScrollView(
                 minZoomScale: 0.42,
@@ -430,16 +417,28 @@ struct AddTimeTable: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
 
-            Button {
-                AppHaptics.trigger(.tap)
-                timeSlotDrafts.append(TimeSlotDraft())
-            } label: {
-                Label("Add Period", systemImage: "plus.circle.fill")
-                    .appFont(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 16) {
+                Button {
+                    AppHaptics.trigger(.tap)
+                    timeSlotDrafts.append(TimeSlotDraft())
+                } label: {
+                    Label("Add Period", systemImage: "plus.circle.fill")
+                        .appFont(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    AppHaptics.trigger(.tap)
+                    scheduleZoomResetToken = UUID()
+                } label: {
+                    Label("Reset Zoom", systemImage: "arrow.counterclockwise")
+                        .appFont(.subheadline, weight: .semibold)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 4)
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
