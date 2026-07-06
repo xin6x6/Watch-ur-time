@@ -20,6 +20,7 @@ struct AssignmentsView: View {
     @State private var drawerStop: AssignmentDrawerStop = .collapsed
     @State private var interactiveDrawerHeight: CGFloat?
     @State private var dragStartDrawerHeight: CGFloat?
+    @State private var drawerHintTrigger = 0
 
     @Query(sort: \TimetableStore.updatedAt, order: .reverse) private var stores: [TimetableStore]
 
@@ -90,6 +91,16 @@ struct AssignmentsView: View {
         }
         .appDefaultFont()
         .tint(.primary)
+        .onAppear {
+            if tabSelection == .assignments {
+                drawerHintTrigger += 1
+            }
+        }
+        .onChange(of: tabSelection) { _, newValue in
+            if newValue == .assignments {
+                drawerHintTrigger += 1
+            }
+        }
     }
 
     private var store: TimetableStore? {
@@ -244,9 +255,10 @@ struct AssignmentsView: View {
         let titleReveal = max(0, min((revealProgress - 0.12) / 0.32, 1))
 
         return ZStack(alignment: .top) {
-            Capsule()
-                .fill(.secondary.opacity(0.55))
-                .frame(width: 36, height: 4)
+            AssignmentDrawerHandleIndicator(
+                isHinting: revealProgress < 0.18,
+                trigger: drawerHintTrigger
+            )
                 .padding(.top, 6)
 
             HStack {
@@ -1140,6 +1152,89 @@ private enum AssignmentDrawerStop: CaseIterable {
     case collapsed
     case middle
     case expanded
+}
+
+private struct AssignmentDrawerHandleIndicator: View {
+    let isHinting: Bool
+    let trigger: Int
+    @State private var animatedProgress: CGFloat = 0
+    @State private var animationTask: Task<Void, Never>?
+
+    var body: some View {
+        AssignmentDrawerHandleShape(progress: isHinting ? animatedProgress : 0)
+            .stroke(
+                .secondary.opacity(0.55),
+                style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+            )
+            .frame(width: 36, height: 12)
+            .onAppear {
+                updateAnimation()
+            }
+            .onChange(of: isHinting) { _, _ in
+                updateAnimation()
+            }
+            .onChange(of: trigger) { _, _ in
+                updateAnimation()
+            }
+            .onDisappear {
+                animationTask?.cancel()
+                animationTask = nil
+            }
+    }
+
+    private func updateAnimation() {
+        animationTask?.cancel()
+        animationTask = nil
+
+        if isHinting {
+            animatedProgress = 0
+            animationTask = Task { @MainActor in
+                let duration = 1.15
+
+                for _ in 0..<2 {
+                    withAnimation(.easeInOut(duration: duration)) {
+                        animatedProgress = 1
+                    }
+                    try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+
+                    withAnimation(.easeInOut(duration: duration)) {
+                        animatedProgress = 0
+                    }
+                    try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+                }
+            }
+        } else {
+            withAnimation(.easeOut(duration: 0.18)) {
+                animatedProgress = 0
+            }
+        }
+    }
+}
+
+private struct AssignmentDrawerHandleShape: Shape {
+    var progress: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let inset: CGFloat = 2
+        let leftX = rect.minX + inset
+        let rightX = rect.maxX - inset
+        let centerX = rect.midX
+
+        let flatY = rect.midY + 0.5
+        let centerY = flatY - 2.2 * progress
+        let sideY = flatY + 1.2 * progress
+
+        var path = Path()
+        path.move(to: CGPoint(x: leftX, y: sideY))
+        path.addLine(to: CGPoint(x: centerX, y: centerY))
+        path.addLine(to: CGPoint(x: rightX, y: sideY))
+        return path
+    }
 }
 
 private struct SwipeableAssignmentRow<Content: View>: View {
