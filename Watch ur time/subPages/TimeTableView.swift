@@ -8,6 +8,7 @@
 import SwiftData
 import SwiftUI
 import PhotosUI
+import UIKit
 
 struct TimeTableView: View {
     @Binding var day: Int
@@ -208,23 +209,34 @@ struct AddTimeTable: View {
     @State private var isImportingTimetableImage = false
     @State private var importStatusMessage: String?
     @State private var ocrReviewContext: TimetableOCRReviewContext?
+    @State private var scheduleZoomResetToken = UUID()
     @FocusState private var focusedTimeField: TimeFieldFocus?
 
+    private let scheduleTimeColumnWidth: CGFloat = 220
+    private let scheduleDayColumnWidth: CGFloat = 120
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if step == .subjects {
-                    subjectEntrySection
-                } else {
+        Group {
+            if step == .subjects {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        subjectEntrySection
+                    }
+                    .padding(.vertical)
+                    .padding(.horizontal, 16)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 16) {
                     scheduleEntrySection
                 }
+                .padding(.vertical)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .padding(.vertical)
-            .padding(.horizontal, step == .subjects ? 16 : 0)
         }
         .navigationTitle(step.title)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden()
+        .toolbar(step == .schedule ? .hidden : .visible, for: .tabBar)
         .appDefaultFont()
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -394,38 +406,32 @@ struct AddTimeTable: View {
                 .appFont(.subheadline)
                 .foregroundStyle(.secondary)
 
-            ScrollView(.horizontal) {
-                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                    GridRow {
-                        scheduleHeaderCell(AppLocalizer.localized("Time"))
-                            .frame(width: 220)
+            HStack {
+                Spacer()
 
-                        ForEach(weekdayColumns) { column in
-                            scheduleHeaderCell(column.title)
-                                .frame(width: 120)
-                        }
-                    }
-
-                    ForEach(timeSlotDrafts.indices, id: \.self) { index in
-                        GridRow {
-                            timeSlotEditor(for: index)
-                                .frame(width: 220)
-
-                            ForEach(weekdayColumns) { column in
-                                scheduleCell(
-                                    slot: timeSlotDrafts[index],
-                                    dayIndex: column.id
-                                )
-                                .frame(width: 120)
-                            }
-                        }
-                    }
+                Button {
+                    AppHaptics.trigger(.tap)
+                    scheduleZoomResetToken = UUID()
+                } label: {
+                    Label("Reset Zoom", systemImage: "arrow.counterclockwise")
+                        .appFont(.subheadline, weight: .semibold)
                 }
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
+                .buttonStyle(.plain)
             }
 
+            ZoomableScheduleScrollView(
+                minZoomScale: 0.42,
+                maxZoomScale: 1.75,
+                resetToken: scheduleZoomResetToken
+            ) {
+                scheduleEditorGrid
+            }
+            .id(scheduleZoomResetToken)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+
             Button {
+                AppHaptics.trigger(.tap)
                 timeSlotDrafts.append(TimeSlotDraft())
             } label: {
                 Label("Add Period", systemImage: "plus.circle.fill")
@@ -435,6 +441,39 @@ struct AddTimeTable: View {
             .buttonStyle(.plain)
             .padding(.top, 4)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var scheduleEditorGrid: some View {
+        Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+            GridRow {
+                scheduleHeaderCell(AppLocalizer.localized("Time"))
+                    .frame(width: scheduleTimeColumnWidth)
+
+                ForEach(weekdayColumns) { column in
+                    scheduleHeaderCell(column.title)
+                        .frame(width: scheduleDayColumnWidth)
+                }
+            }
+
+            ForEach(timeSlotDrafts.indices, id: \.self) { index in
+                GridRow {
+                    timeSlotEditor(for: index)
+                        .frame(width: scheduleTimeColumnWidth)
+
+                    ForEach(weekdayColumns) { column in
+                        scheduleCell(
+                            slot: timeSlotDrafts[index],
+                            dayIndex: column.id
+                        )
+                        .frame(width: scheduleDayColumnWidth)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
+        .background(Color.clear)
     }
 
     private func scheduleHeaderCell(_ title: String) -> some View {
@@ -959,6 +998,236 @@ private enum AddTimeTableStep {
 private struct WeekdayColumn: Identifiable {
     let id: Int
     let title: String
+}
+
+private final class TouchPriorityZoomScrollView: UIScrollView {
+    override func touchesShouldCancel(in view: UIView) -> Bool {
+        true
+    }
+}
+
+private struct ZoomableScheduleScrollView<Content: View>: UIViewRepresentable {
+    let minZoomScale: CGFloat
+    let maxZoomScale: CGFloat
+    let resetToken: UUID
+    @ViewBuilder let content: Content
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(content: content, resetToken: resetToken)
+    }
+
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = TouchPriorityZoomScrollView()
+        scrollView.delegate = context.coordinator
+        scrollView.minimumZoomScale = minZoomScale
+        scrollView.maximumZoomScale = maxZoomScale
+        scrollView.zoomScale = 1
+        scrollView.bounces = false
+        scrollView.bouncesZoom = false
+        scrollView.alwaysBounceHorizontal = false
+        scrollView.alwaysBounceVertical = false
+        scrollView.showsHorizontalScrollIndicator = true
+        scrollView.showsVerticalScrollIndicator = true
+        scrollView.backgroundColor = .clear
+        scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.delaysContentTouches = true
+        scrollView.canCancelContentTouches = true
+        scrollView.panGestureRecognizer.cancelsTouchesInView = true
+        scrollView.pinchGestureRecognizer?.cancelsTouchesInView = true
+
+        let wrapperView = context.coordinator.wrapperView
+        wrapperView.backgroundColor = .clear
+
+        let hostedView = context.coordinator.hostingController.view!
+        hostedView.backgroundColor = .clear
+        wrapperView.addSubview(hostedView)
+        scrollView.addSubview(wrapperView)
+        return scrollView
+    }
+
+    func updateUIView(_ scrollView: UIScrollView, context: Context) {
+        let previousContentOffset = scrollView.contentOffset
+        let previousZoomScale = scrollView.zoomScale
+
+        context.coordinator.hostingController.rootView = content
+
+        let fittingSize = context.coordinator.hostingController.sizeThatFits(
+            in: CGSize(width: 10_000, height: 10_000)
+        )
+
+        let contentSize = CGSize(
+            width: max(fittingSize.width, 1),
+            height: max(fittingSize.height, 1)
+        )
+
+        context.coordinator.wrapperView.frame = CGRect(origin: .zero, size: contentSize)
+        context.coordinator.hostingController.view.frame = CGRect(origin: .zero, size: contentSize)
+        scrollView.contentSize = contentSize
+        context.coordinator.wrapperView.setNeedsLayout()
+        context.coordinator.wrapperView.layoutIfNeeded()
+        context.coordinator.hostingController.view.setNeedsLayout()
+        context.coordinator.hostingController.view.layoutIfNeeded()
+        scrollView.layoutIfNeeded()
+
+        if scrollView.zoomScale < minZoomScale || scrollView.zoomScale > maxZoomScale {
+            scrollView.zoomScale = min(max(scrollView.zoomScale, minZoomScale), maxZoomScale)
+        }
+
+        if context.coordinator.lastResetToken != resetToken {
+            context.coordinator.lastResetToken = resetToken
+            context.coordinator.performReset(for: scrollView)
+            return
+        }
+
+        context.coordinator.updateInsetsAndClampOffset(
+            for: scrollView,
+            desiredContentOffset: previousContentOffset
+        )
+        context.coordinator.stabilizeContentOffset(
+            for: scrollView,
+            desiredContentOffset: previousContentOffset,
+            desiredZoomScale: previousZoomScale
+        )
+    }
+
+    final class Coordinator: NSObject, UIScrollViewDelegate {
+        let hostingController: UIHostingController<Content>
+        let wrapperView = UIView()
+        var lastResetToken: UUID?
+
+        init(content: Content, resetToken: UUID) {
+            hostingController = UIHostingController(rootView: content)
+            lastResetToken = resetToken
+            super.init()
+        }
+
+        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+            wrapperView
+        }
+
+        func scrollViewDidZoom(_ scrollView: UIScrollView) {
+            updateInsetsAndClampOffset(for: scrollView)
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            clampOffset(for: scrollView)
+        }
+
+        func performReset(for scrollView: UIScrollView) {
+            resetToOrigin(for: scrollView)
+
+            DispatchQueue.main.async { [weak scrollView, weak self] in
+                guard let scrollView, let self else {
+                    return
+                }
+
+                self.resetToOrigin(for: scrollView)
+
+                DispatchQueue.main.async { [weak scrollView, weak self] in
+                    guard let scrollView, let self else {
+                        return
+                    }
+
+                    self.resetToOrigin(for: scrollView)
+                }
+            }
+        }
+
+        func stabilizeContentOffset(
+            for scrollView: UIScrollView,
+            desiredContentOffset: CGPoint,
+            desiredZoomScale: CGFloat
+        ) {
+            DispatchQueue.main.async { [weak scrollView, weak self] in
+                guard let scrollView, let self else {
+                    return
+                }
+
+                self.wrapperView.setNeedsLayout()
+                self.wrapperView.layoutIfNeeded()
+                self.hostingController.view.setNeedsLayout()
+                self.hostingController.view.layoutIfNeeded()
+                scrollView.layoutIfNeeded()
+                if abs(scrollView.zoomScale - desiredZoomScale) > 0.0001 {
+                    scrollView.zoomScale = desiredZoomScale
+                }
+                self.updateInsetsAndClampOffset(
+                    for: scrollView,
+                    desiredContentOffset: desiredContentOffset
+                )
+
+                DispatchQueue.main.async { [weak scrollView, weak self] in
+                    guard let scrollView, let self else {
+                        return
+                    }
+
+                    self.wrapperView.setNeedsLayout()
+                    self.wrapperView.layoutIfNeeded()
+                    self.hostingController.view.setNeedsLayout()
+                    self.hostingController.view.layoutIfNeeded()
+                    scrollView.layoutIfNeeded()
+                    if abs(scrollView.zoomScale - desiredZoomScale) > 0.0001 {
+                        scrollView.zoomScale = desiredZoomScale
+                    }
+                    self.updateInsetsAndClampOffset(
+                        for: scrollView,
+                        desiredContentOffset: desiredContentOffset
+                    )
+                }
+            }
+        }
+
+        private func resetToOrigin(for scrollView: UIScrollView) {
+            wrapperView.setNeedsLayout()
+            wrapperView.layoutIfNeeded()
+            hostingController.view.setNeedsLayout()
+            hostingController.view.layoutIfNeeded()
+            scrollView.layoutIfNeeded()
+            scrollView.contentInset = .zero
+            scrollView.setZoomScale(1, animated: false)
+            scrollView.contentOffset = .zero
+            updateInsetsAndClampOffset(for: scrollView, desiredContentOffset: .zero)
+        }
+
+        func updateInsetsAndClampOffset(
+            for scrollView: UIScrollView,
+            desiredContentOffset: CGPoint? = nil
+        ) {
+            scrollView.contentInset = .zero
+
+            if let desiredContentOffset {
+                clampOffset(for: scrollView, proposedOffset: desiredContentOffset)
+            } else {
+                clampOffset(for: scrollView)
+            }
+        }
+
+        private func clampOffset(for scrollView: UIScrollView) {
+            clampOffset(for: scrollView, proposedOffset: scrollView.contentOffset)
+        }
+
+        private func clampOffset(for scrollView: UIScrollView, proposedOffset: CGPoint) {
+            let minOffsetX = -scrollView.contentInset.left
+            let maxOffsetX = max(
+                scrollView.contentSize.width - scrollView.bounds.width + scrollView.contentInset.right,
+                minOffsetX
+            )
+            let minOffsetY = -scrollView.contentInset.top
+            let maxOffsetY = max(
+                scrollView.contentSize.height - scrollView.bounds.height + scrollView.contentInset.bottom,
+                minOffsetY
+            )
+
+            let clampedOffset = CGPoint(
+                x: min(max(proposedOffset.x, minOffsetX), maxOffsetX),
+                y: min(max(proposedOffset.y, minOffsetY), maxOffsetY)
+            )
+
+            if scrollView.contentOffset != clampedOffset {
+                scrollView.contentOffset = clampedOffset
+            }
+        }
+    }
 }
 
 private enum TimeFieldKind: Hashable {
