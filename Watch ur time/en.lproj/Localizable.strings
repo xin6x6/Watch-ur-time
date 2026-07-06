@@ -75,6 +75,8 @@
 "Wed." = "Wed.";
 "Thu." = "Thu.";
 "Fri." = "Fri.";
+"Sat." = "Sat.";
+"Sun." = "Sun.";
 "Edit Timetable" = "Edit Timetable";
 "Add Timetable" = "Add Timetable";
 "Free" = "Free";
@@ -107,6 +109,8 @@
 "Wednesday" = "Wednesday";
 "Thursday" = "Thursday";
 "Friday" = "Friday";
+"Saturday" = "Saturday";
+"Sunday" = "Sunday";
 "Day" = "Day";
 "No classes for %@" = "No classes for %@";
 "Create or edit your timetable first, then adjust notifications for each class here." = "Create or edit your timetable first, then adjust notifications for each class here.";

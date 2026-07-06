@@ -75,6 +75,8 @@
 "Wed." = "周三";
 "Thu." = "周四";
 "Fri." = "周五";
+"Sat." = "周六";
+"Sun." = "周日";
 "Edit Timetable" = "编辑课程表";
 "Add Timetable" = "添加课程表";
 "Free" = "空闲";
@@ -107,6 +109,8 @@
 "Wednesday" = "星期三";
 "Thursday" = "星期四";
 "Friday" = "星期五";
+"Saturday" = "星期六";
+"Sunday" = "星期日";
 "Day" = "日期";
 "No classes for %@" = "%@没有课程";
 "Create or edit your timetable first, then adjust notifications for each class here." = "请先创建或编辑课程表，然后在这里调整每节课的通知。";

@@ -64,6 +64,10 @@ struct NotificationView: View {
             return AppLocalizer.localized("Thursday")
         case 5:
             return AppLocalizer.localized("Friday")
+        case 6:
+            return AppLocalizer.localized("Saturday")
+        case 7:
+            return AppLocalizer.localized("Sunday")
         default:
             return AppLocalizer.localized("Day")
         }

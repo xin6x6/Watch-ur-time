@@ -20,14 +20,7 @@ struct TimeTableView: View {
             VStack(spacing: 0) {
                 GlassCard {
                     VStack {
-                        Picker(selection: $day, label: Text("Select day")) {
-                            Text("Mon.").tag(1)
-                            Text("Tue.").tag(2)
-                            Text("Wed.").tag(3)
-                            Text("Thu.").tag(4)
-                            Text("Fri.").tag(5)
-                        }
-                        .pickerStyle(.segmented)
+                        dayPicker
                         .padding(.bottom, 20)
                         .shadow(radius: 10)
 
@@ -65,6 +58,12 @@ struct TimeTableView: View {
         }
         .appDefaultFont()
         .tint(.primary)
+        .onAppear {
+            normalizeSelectedDayIfNeeded()
+        }
+        .onChange(of: stores.first?.updatedAt) { _, _ in
+            normalizeSelectedDayIfNeeded()
+        }
         .onChange(of: day) { _, _ in
             AppHaptics.trigger(.selection)
         }
@@ -74,6 +73,57 @@ struct TimeTableView: View {
         stores.first?.hasTimetable == true
             ? AppLocalizer.localized("Edit Timetable")
             : AppLocalizer.localized("Add Timetable")
+    }
+
+    private var availableDayColumns: [WeekdayColumn] {
+        let configuredDays = Set(stores.first?.placements.map(\.dayIndex) ?? [])
+        return timetableWeekdayColumns(enabledWeekendDayIndices: configuredDays)
+    }
+
+    @ViewBuilder
+    private var dayPicker: some View {
+        if availableDayColumns.count <= 5 {
+            Picker(selection: $day, label: Text("Select day")) {
+                ForEach(availableDayColumns) { column in
+                    Text(column.title).tag(column.id)
+                }
+            }
+            .pickerStyle(.segmented)
+        } else {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(availableDayColumns) { column in
+                        Button {
+                            AppHaptics.trigger(.selection)
+                            day = column.id
+                        } label: {
+                            Text(column.title)
+                                .appFont(.subheadline, weight: .semibold)
+                                .foregroundStyle(day == column.id ? Color.white : Color.primary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(day == column.id ? Color.accentColor : Color.secondary.opacity(0.14))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+        }
+    }
+
+    private func normalizeSelectedDayIfNeeded() {
+        let availableDays = availableDayColumns.map(\.id)
+        guard !availableDays.isEmpty else {
+            return
+        }
+
+        if !availableDays.contains(day) {
+            day = availableDays.first ?? 1
+        }
     }
 }
 
@@ -210,6 +260,7 @@ struct AddTimeTable: View {
     @State private var importStatusMessage: String?
     @State private var ocrReviewContext: TimetableOCRReviewContext?
     @State private var scheduleZoomResetToken = UUID()
+    @State private var enabledWeekendDayIndices: Set<Int> = []
     @FocusState private var focusedTimeField: TimeFieldFocus?
 
     private let scheduleTimeColumnWidth: CGFloat = 220
@@ -451,6 +502,24 @@ struct AddTimeTable: View {
 
                 ForEach(weekdayColumns) { column in
                     scheduleHeaderCell(column.title)
+                        .overlay(alignment: .topTrailing) {
+                            if column.isOptionalWeekend {
+                                Button(role: .destructive) {
+                                    AppHaptics.trigger(.warning)
+                                    disableWeekendColumn(column.id)
+                                } label: {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundStyle(.red)
+                                        .padding(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .frame(width: scheduleDayColumnWidth)
+                }
+
+                ForEach(disabledWeekendColumns) { column in
+                    weekendAddHeaderCell(for: column)
                         .frame(width: scheduleDayColumnWidth)
                 }
             }
@@ -484,6 +553,27 @@ struct AddTimeTable: View {
                     .padding(.horizontal, 8)
             }
             .frame(height: 54)
+    }
+
+    private func weekendAddHeaderCell(for column: WeekdayColumn) -> some View {
+        Button {
+            AppHaptics.trigger(.tap)
+            enableWeekendColumn(column.id)
+        } label: {
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.24 : 0.14))
+                .overlay {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                        Text(column.title)
+                            .lineLimit(1)
+                    }
+                    .appFont(.subheadline, weight: .semibold)
+                    .padding(.horizontal, 8)
+                }
+                .frame(height: 54)
+        }
+        .buttonStyle(.plain)
     }
 
     private func timeSlotEditor(for index: Int) -> some View {
@@ -623,13 +713,11 @@ struct AddTimeTable: View {
     }
 
     private var weekdayColumns: [WeekdayColumn] {
-        [
-            WeekdayColumn(id: 1, title: AppLocalizer.localized("Mon.")),
-            WeekdayColumn(id: 2, title: AppLocalizer.localized("Tue.")),
-            WeekdayColumn(id: 3, title: AppLocalizer.localized("Wed.")),
-            WeekdayColumn(id: 4, title: AppLocalizer.localized("Thu.")),
-            WeekdayColumn(id: 5, title: AppLocalizer.localized("Fri."))
-        ]
+        timetableWeekdayColumns(enabledWeekendDayIndices: enabledWeekendDayIndices)
+    }
+
+    private var disabledWeekendColumns: [WeekdayColumn] {
+        timetableWeekendColumns.filter { !enabledWeekendDayIndices.contains($0.id) }
     }
 
     private var errorBinding: Binding<Bool> {
@@ -715,6 +803,30 @@ struct AddTimeTable: View {
         return completedSubjects.first(where: { $0.id == subjectID })
     }
 
+    private func enableWeekendColumn(_ dayIndex: Int) {
+        guard (6...7).contains(dayIndex) else {
+            return
+        }
+        enabledWeekendDayIndices.insert(dayIndex)
+    }
+
+    private func disableWeekendColumn(_ dayIndex: Int) {
+        guard enabledWeekendDayIndices.remove(dayIndex) != nil else {
+            return
+        }
+
+        for slotID in Array(selectedSubjectsBySlot.keys) {
+            var selections = selectedSubjectsBySlot[slotID] ?? [:]
+            selections.removeValue(forKey: dayIndex)
+
+            if selections.isEmpty {
+                selectedSubjectsBySlot.removeValue(forKey: slotID)
+            } else {
+                selectedSubjectsBySlot[slotID] = selections
+            }
+        }
+    }
+
     private func pruneSelections(removing removedID: UUID) {
         let validSubjectIDs = Set(completedSubjects.map(\.id)).subtracting([removedID])
 
@@ -739,6 +851,7 @@ struct AddTimeTable: View {
 
         let storedSlots = store.slots.map { TimeSlotDraft(slot: $0) }
         timeSlotDrafts = storedSlots.isEmpty ? [TimeSlotDraft()] : storedSlots
+        enabledWeekendDayIndices = Set(store.placements.map(\.dayIndex)).intersection([6, 7])
 
         var selectionMap: [UUID: [Int: UUID]] = [:]
         for placement in store.placements {
@@ -803,6 +916,7 @@ struct AddTimeTable: View {
             selectionMap[slotID] = daySelections
         }
         selectedSubjectsBySlot = selectionMap
+        enabledWeekendDayIndices = Set(payload.placements.map(\.dayIndex)).intersection([6, 7])
         step = .subjects
     }
 
@@ -997,6 +1111,28 @@ private enum AddTimeTableStep {
 private struct WeekdayColumn: Identifiable {
     let id: Int
     let title: String
+    let isOptionalWeekend: Bool
+}
+
+private var timetableWeekdayBaseColumns: [WeekdayColumn] {
+    [
+        WeekdayColumn(id: 1, title: AppLocalizer.localized("Mon."), isOptionalWeekend: false),
+        WeekdayColumn(id: 2, title: AppLocalizer.localized("Tue."), isOptionalWeekend: false),
+        WeekdayColumn(id: 3, title: AppLocalizer.localized("Wed."), isOptionalWeekend: false),
+        WeekdayColumn(id: 4, title: AppLocalizer.localized("Thu."), isOptionalWeekend: false),
+        WeekdayColumn(id: 5, title: AppLocalizer.localized("Fri."), isOptionalWeekend: false)
+    ]
+}
+
+private var timetableWeekendColumns: [WeekdayColumn] {
+    [
+        WeekdayColumn(id: 6, title: AppLocalizer.localized("Sat."), isOptionalWeekend: true),
+        WeekdayColumn(id: 7, title: AppLocalizer.localized("Sun."), isOptionalWeekend: true)
+    ]
+}
+
+private func timetableWeekdayColumns(enabledWeekendDayIndices: Set<Int>) -> [WeekdayColumn] {
+    timetableWeekdayBaseColumns + timetableWeekendColumns.filter { enabledWeekendDayIndices.contains($0.id) }
 }
 
 private class TouchPriorityZoomScrollView: UIScrollView {

@@ -31,7 +31,7 @@ final class WidgetSnapshotStore {
         let subjectsByID = Dictionary(uniqueKeysWithValues: snapshot.subjects.map { ($0.id, $0) })
 
         let items = snapshot.placements.compactMap { placement -> WidgetClassSnapshot? in
-            guard (1...5).contains(placement.dayIndex),
+            guard (1...7).contains(placement.dayIndex),
                   snapshot.slots.indices.contains(placement.slotIndex),
                   let subject = subjectsByID[placement.subjectID]
             else {

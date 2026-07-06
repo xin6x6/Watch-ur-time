@@ -14,7 +14,7 @@ struct TimeTableView: View {
         Group {
             if dataStore.hasTimetable {
                 TabView(selection: selectedDayBinding) {
-                    ForEach(1...5, id: \.self) { day in
+                    ForEach(availableDayIndices, id: \.self) { day in
                         dayPage(for: day)
                             .tag(day)
                     }
@@ -63,6 +63,11 @@ struct TimeTableView: View {
             get: { dataStore.selectedDay },
             set: { dataStore.setSelectedDay($0) }
         )
+    }
+
+    private var availableDayIndices: [Int] {
+        let configuredDays = Set(dataStore.snapshot.placements.map(\.dayIndex))
+        return [1, 2, 3, 4, 5] + [6, 7].filter { configuredDays.contains($0) }
     }
 
     private func dayPage(for day: Int) -> some View {
@@ -178,7 +183,7 @@ private struct WatchDayPickerView: View {
 
     var body: some View {
         List {
-            ForEach(1...5, id: \.self) { day in
+            ForEach(availableDayIndices, id: \.self) { day in
                 Button {
                     dataStore.setSelectedDay(day)
                     dismiss()
@@ -196,6 +201,11 @@ private struct WatchDayPickerView: View {
         }
         .watchAppDefaultFont()
         .navigationTitle("Weekday")
+    }
+
+    private var availableDayIndices: [Int] {
+        let configuredDays = Set(dataStore.snapshot.placements.map(\.dayIndex))
+        return [1, 2, 3, 4, 5] + [6, 7].filter { configuredDays.contains($0) }
     }
 }
 

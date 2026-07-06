@@ -310,6 +310,14 @@ struct WatchTimetableStoreSnapshot: Codable {
     )
 }
 
+private extension WatchTimetableStoreSnapshot {
+    var availableDayIndices: [Int] {
+        let configuredDays = Set(placements.map(\.dayIndex))
+        let weekendDays = [6, 7].filter { configuredDays.contains($0) }
+        return [1, 2, 3, 4, 5] + weekendDays
+    }
+}
+
 struct WatchTimetableDayEntry: Identifiable, Hashable {
     let placement: WatchTimetablePlacement
     let subject: WatchTimetableSubject
@@ -340,7 +348,7 @@ final class WatchDataStore: NSObject, ObservableObject {
 
     override init() {
         self.snapshot = Self.loadSnapshot(storageKey: storageKey)
-        self.selectedDay = Self.currentTimetableDay()
+        self.selectedDay = Self.normalizedDay(Self.currentTimetableDay(), availableDays: Self.loadSnapshot(storageKey: storageKey).availableDayIndices)
         self.appFontOption = Self.loadAppFontOption(storageKey: fontStorageKey)
         super.init()
         WatchAppFontCatalog.registerBundledFontsIfNeeded()
@@ -359,11 +367,11 @@ final class WatchDataStore: NSObject, ObservableObject {
     }
 
     func refreshCurrentDay() {
-        selectedDay = Self.currentTimetableDay()
+        selectedDay = Self.normalizedDay(Self.currentTimetableDay(), availableDays: snapshot.availableDayIndices)
     }
 
     func setSelectedDay(_ day: Int) {
-        selectedDay = min(max(day, 1), 5)
+        selectedDay = Self.normalizedDay(day, availableDays: snapshot.availableDayIndices)
     }
 
     func entries(for dayIndex: Int) -> [WatchTimetableDayEntry] {
@@ -528,6 +536,7 @@ final class WatchDataStore: NSObject, ObservableObject {
         }
 
         snapshot = decoded
+        selectedDay = Self.normalizedDay(selectedDay, availableDays: decoded.availableDayIndices)
         persistSnapshot()
         Task {
             await reminderScheduler.sync(with: decoded)
@@ -642,8 +651,8 @@ final class WatchDataStore: NSObject, ObservableObject {
         case 4: return 3
         case 5: return 4
         case 6: return 5
-        case 7: return 5
-        case 1: return 1
+        case 7: return 6
+        case 1: return 7
         default: return 1
         }
     }
@@ -655,8 +664,20 @@ final class WatchDataStore: NSObject, ObservableObject {
         case 3: return "Wed."
         case 4: return "Thu."
         case 5: return "Fri."
+        case 6: return "Sat."
+        case 7: return "Sun."
         default: return "Mon."
         }
+    }
+
+    private static func normalizedDay(_ day: Int, availableDays: [Int]) -> Int {
+        guard !availableDays.isEmpty else {
+            return min(max(day, 1), 7)
+        }
+        if availableDays.contains(day) {
+            return day
+        }
+        return availableDays.first ?? 1
     }
 }
 
