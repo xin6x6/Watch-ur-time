@@ -559,6 +559,7 @@ struct BarAssignmentsView: View {
     private let laneSpacing: CGFloat = 10
     private let subjectSpacing: CGFloat = 16
     private let zoomAnchorSegmentsPerDay = 12
+    private let maxRenderableDays = 560
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -767,8 +768,19 @@ struct BarAssignmentsView: View {
         let start = startOfWeek(for: minDate)
         let lastWeekStart = startOfWeek(for: maxDate)
         let end = calendar.date(byAdding: .day, value: 7, to: lastWeekStart) ?? lastWeekStart
+        let totalDays = max(calendar.dateComponents([.day], from: start, to: end).day ?? 0, 0)
 
-        return (start, end)
+        guard totalDays > maxRenderableDays else {
+            return (start, end)
+        }
+
+        let leadingDays = maxRenderableDays / 2
+        let cappedStart = calendar.date(byAdding: .day, value: -leadingDays, to: selectedWeekStart) ?? selectedWeekStart
+        let normalizedCappedStart = calendar.startOfDay(for: cappedStart)
+        let cappedEnd = calendar.date(byAdding: .day, value: maxRenderableDays, to: normalizedCappedStart)
+            ?? normalizedCappedStart
+
+        return (normalizedCappedStart, cappedEnd)
     }
 
     private var timelineDates: [Date] {
@@ -804,11 +816,16 @@ struct BarAssignmentsView: View {
     }
 
     private var groupedAssignments: [SubjectAssignmentGroup] {
-        let subjectOrder = Array(Set(assignments.map { $0.subject }))
+        let visibleAssignments = assignments.filter { assignment in
+            let range = normalizedDateRange(for: assignment)
+            return range.start < timelineBounds.endExclusive && range.end > timelineBounds.start
+        }
+
+        let subjectOrder = Array(Set(visibleAssignments.map { $0.subject }))
             .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
 
         return subjectOrder.compactMap { subject in
-            let subjectAssignments = assignments
+            let subjectAssignments = visibleAssignments
                 .filter { $0.subject == subject }
                 .sorted { lhs, rhs in
                     let lhsStart = min(lhs.startDate, lhs.dueDate)
@@ -857,17 +874,32 @@ struct BarAssignmentsView: View {
         let normalizedStart = calendar.startOfDay(for: min(assignment.startDate, assignment.dueDate))
         let normalizedEndInclusive = calendar.startOfDay(for: max(assignment.startDate, assignment.dueDate))
         let normalizedEndExclusive = calendar.date(byAdding: .day, value: 1, to: normalizedEndInclusive) ?? normalizedEndInclusive
+        let totalRenderableDays = max(
+            calendar.dateComponents([.day], from: timelineBounds.start, to: timelineBounds.endExclusive).day ?? 0,
+            1
+        )
 
         let startOffset = max(
             calendar.dateComponents([.day], from: timelineBounds.start, to: normalizedStart).day ?? 0,
             0
         )
-        let endOffsetExclusive = max(
-            calendar.dateComponents([.day], from: timelineBounds.start, to: normalizedEndExclusive).day ?? startOffset + 1,
-            startOffset + 1
+        let endOffsetExclusive = min(
+            max(
+                calendar.dateComponents([.day], from: timelineBounds.start, to: normalizedEndExclusive).day ?? startOffset + 1,
+                startOffset + 1
+            ),
+            totalRenderableDays
         )
 
         return startOffset..<endOffsetExclusive
+    }
+
+    private func normalizedDateRange(for assignment: TimetableAssignment) -> DateInterval {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: min(assignment.startDate, assignment.dueDate))
+        let inclusiveEnd = calendar.startOfDay(for: max(assignment.startDate, assignment.dueDate))
+        let end = calendar.date(byAdding: .day, value: 1, to: inclusiveEnd) ?? inclusiveEnd
+        return DateInterval(start: start, end: end)
     }
 
     private func barMetrics(
