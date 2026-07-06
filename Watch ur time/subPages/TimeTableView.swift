@@ -18,7 +18,6 @@ struct TimeTableView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Title(text: AppLocalizer.localized("Watch ur time"))
                 GlassCard {
                     VStack {
                         Picker(selection: $day, label: Text("Select day")) {
@@ -43,7 +42,8 @@ struct TimeTableView: View {
             .safeAreaInset(edge: .bottom) {
                 Color.clear.frame(height: 12)
             }
-            .padding()
+            .padding(.top, 6)
+            .padding(.bottom)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
