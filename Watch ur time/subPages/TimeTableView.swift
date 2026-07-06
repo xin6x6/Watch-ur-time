@@ -999,146 +999,147 @@ private struct WeekdayColumn: Identifiable {
     let title: String
 }
 
-private final class TouchPriorityZoomScrollView: UIScrollView {
+private class TouchPriorityZoomScrollView: UIScrollView {
     override func touchesShouldCancel(in view: UIView) -> Bool {
         true
     }
 }
 
-private struct ZoomableScheduleScrollView<Content: View>: UIViewRepresentable {
-    let minZoomScale: CGFloat
-    let maxZoomScale: CGFloat
-    let resetToken: UUID
-    @ViewBuilder let content: Content
+private final class ZoomHostingScrollView: TouchPriorityZoomScrollView, UIScrollViewDelegate {
+    let hostingController = UIHostingController(rootView: AnyView(EmptyView()))
+    let wrapperView = UIView()
+    var lastResetToken: UUID?
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(content: content, resetToken: resetToken)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
     }
 
-    func makeUIView(context: Context) -> UIScrollView {
-        let scrollView = TouchPriorityZoomScrollView()
-        scrollView.delegate = context.coordinator
-        scrollView.minimumZoomScale = minZoomScale
-        scrollView.maximumZoomScale = maxZoomScale
-        scrollView.zoomScale = 1
-        scrollView.bounces = false
-        scrollView.bouncesZoom = false
-        scrollView.alwaysBounceHorizontal = false
-        scrollView.alwaysBounceVertical = false
-        scrollView.showsHorizontalScrollIndicator = true
-        scrollView.showsVerticalScrollIndicator = true
-        scrollView.backgroundColor = .clear
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.delaysContentTouches = true
-        scrollView.canCancelContentTouches = true
-        scrollView.panGestureRecognizer.cancelsTouchesInView = true
-        scrollView.pinchGestureRecognizer?.cancelsTouchesInView = true
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
 
-        let wrapperView = context.coordinator.wrapperView
+    private func commonInit() {
+        delegate = self
+        zoomScale = 1
+        bounces = false
+        bouncesZoom = false
+        alwaysBounceHorizontal = false
+        alwaysBounceVertical = false
+        showsHorizontalScrollIndicator = true
+        showsVerticalScrollIndicator = true
+        backgroundColor = .clear
+        contentInsetAdjustmentBehavior = .never
+        delaysContentTouches = true
+        canCancelContentTouches = true
+        panGestureRecognizer.cancelsTouchesInView = true
+        pinchGestureRecognizer?.cancelsTouchesInView = true
+
         wrapperView.backgroundColor = .clear
-
-        let hostedView = context.coordinator.hostingController.view!
+        let hostedView = hostingController.view!
         hostedView.backgroundColor = .clear
         wrapperView.addSubview(hostedView)
-        scrollView.addSubview(wrapperView)
-        return scrollView
+        addSubview(wrapperView)
     }
 
-    func updateUIView(_ scrollView: UIScrollView, context: Context) {
-        let previousContentOffset = scrollView.contentOffset
-        let previousZoomScale = scrollView.zoomScale
+    func applyConfiguration(
+        content: AnyView,
+        minZoomScale: CGFloat,
+        maxZoomScale: CGFloat,
+        resetToken: UUID
+    ) {
+        let previousContentOffset = contentOffset
+        let previousZoomScale = zoomScale
 
-        context.coordinator.hostingController.rootView = content
+        minimumZoomScale = minZoomScale
+        maximumZoomScale = maxZoomScale
+        hostingController.rootView = content
 
-        let fittingSize = context.coordinator.hostingController.sizeThatFits(
+        let fittingSize = hostingController.sizeThatFits(
             in: CGSize(width: 10_000, height: 10_000)
         )
 
-        let contentSize = CGSize(
+        let nextContentSize = CGSize(
             width: max(fittingSize.width, 1),
             height: max(fittingSize.height, 1)
         )
 
-        context.coordinator.wrapperView.frame = CGRect(origin: .zero, size: contentSize)
-        context.coordinator.hostingController.view.frame = CGRect(origin: .zero, size: contentSize)
-        scrollView.contentSize = contentSize
-        context.coordinator.wrapperView.setNeedsLayout()
-        context.coordinator.wrapperView.layoutIfNeeded()
-        context.coordinator.hostingController.view.setNeedsLayout()
-        context.coordinator.hostingController.view.layoutIfNeeded()
-        scrollView.layoutIfNeeded()
+        wrapperView.frame = CGRect(origin: .zero, size: nextContentSize)
+        hostingController.view.frame = CGRect(origin: .zero, size: nextContentSize)
+        contentSize = nextContentSize
+        wrapperView.setNeedsLayout()
+        wrapperView.layoutIfNeeded()
+        hostingController.view.setNeedsLayout()
+        hostingController.view.layoutIfNeeded()
+        layoutIfNeeded()
 
-        if scrollView.zoomScale < minZoomScale || scrollView.zoomScale > maxZoomScale {
-            scrollView.zoomScale = min(max(scrollView.zoomScale, minZoomScale), maxZoomScale)
+        if zoomScale < minZoomScale || zoomScale > maxZoomScale {
+            zoomScale = min(max(zoomScale, minZoomScale), maxZoomScale)
         }
 
-        if context.coordinator.lastResetToken != resetToken {
-            context.coordinator.lastResetToken = resetToken
-            context.coordinator.performReset(for: scrollView)
+        if lastResetToken != resetToken {
+            lastResetToken = resetToken
+            performReset()
             return
         }
 
-        context.coordinator.updateInsetsAndClampOffset(
-            for: scrollView,
-            desiredContentOffset: previousContentOffset
-        )
-        context.coordinator.stabilizeContentOffset(
-            for: scrollView,
+        updateInsetsAndClampOffset(desiredContentOffset: previousContentOffset)
+        stabilizeContentOffset(
             desiredContentOffset: previousContentOffset,
             desiredZoomScale: previousZoomScale
         )
     }
 
-    final class Coordinator: NSObject, UIScrollViewDelegate {
-        let hostingController: UIHostingController<Content>
-        let wrapperView = UIView()
-        var lastResetToken: UUID?
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        wrapperView
+    }
 
-        init(content: Content, resetToken: UUID) {
-            hostingController = UIHostingController(rootView: content)
-            lastResetToken = resetToken
-            super.init()
-        }
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+        updateInsetsAndClampOffset()
+    }
 
-        func viewForZooming(in scrollView: UIScrollView) -> UIView? {
-            wrapperView
-        }
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        clampOffset()
+    }
 
-        func scrollViewDidZoom(_ scrollView: UIScrollView) {
-            updateInsetsAndClampOffset(for: scrollView)
-        }
+    func performReset() {
+        resetToOrigin()
 
-        func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            clampOffset(for: scrollView)
-        }
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
 
-        func performReset(for scrollView: UIScrollView) {
-            resetToOrigin(for: scrollView)
+            self.resetToOrigin()
 
-            DispatchQueue.main.async { [weak scrollView, weak self] in
-                guard let scrollView, let self else {
-                    return
-                }
-
-                self.resetToOrigin(for: scrollView)
-
-                DispatchQueue.main.async { [weak scrollView, weak self] in
-                    guard let scrollView, let self else {
-                        return
-                    }
-
-                    self.resetToOrigin(for: scrollView)
-                }
+            DispatchQueue.main.async { [weak self] in
+                self?.resetToOrigin()
             }
         }
+    }
 
-        func stabilizeContentOffset(
-            for scrollView: UIScrollView,
-            desiredContentOffset: CGPoint,
-            desiredZoomScale: CGFloat
-        ) {
-            DispatchQueue.main.async { [weak scrollView, weak self] in
-                guard let scrollView, let self else {
+    func stabilizeContentOffset(
+        desiredContentOffset: CGPoint,
+        desiredZoomScale: CGFloat
+    ) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+
+            self.wrapperView.setNeedsLayout()
+            self.wrapperView.layoutIfNeeded()
+            self.hostingController.view.setNeedsLayout()
+            self.hostingController.view.layoutIfNeeded()
+            self.layoutIfNeeded()
+            if abs(self.zoomScale - desiredZoomScale) > 0.0001 {
+                self.zoomScale = desiredZoomScale
+            }
+            self.updateInsetsAndClampOffset(desiredContentOffset: desiredContentOffset)
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self else {
                     return
                 }
 
@@ -1146,86 +1147,102 @@ private struct ZoomableScheduleScrollView<Content: View>: UIViewRepresentable {
                 self.wrapperView.layoutIfNeeded()
                 self.hostingController.view.setNeedsLayout()
                 self.hostingController.view.layoutIfNeeded()
-                scrollView.layoutIfNeeded()
-                if abs(scrollView.zoomScale - desiredZoomScale) > 0.0001 {
-                    scrollView.zoomScale = desiredZoomScale
+                self.layoutIfNeeded()
+                if abs(self.zoomScale - desiredZoomScale) > 0.0001 {
+                    self.zoomScale = desiredZoomScale
                 }
-                self.updateInsetsAndClampOffset(
-                    for: scrollView,
-                    desiredContentOffset: desiredContentOffset
-                )
-
-                DispatchQueue.main.async { [weak scrollView, weak self] in
-                    guard let scrollView, let self else {
-                        return
-                    }
-
-                    self.wrapperView.setNeedsLayout()
-                    self.wrapperView.layoutIfNeeded()
-                    self.hostingController.view.setNeedsLayout()
-                    self.hostingController.view.layoutIfNeeded()
-                    scrollView.layoutIfNeeded()
-                    if abs(scrollView.zoomScale - desiredZoomScale) > 0.0001 {
-                        scrollView.zoomScale = desiredZoomScale
-                    }
-                    self.updateInsetsAndClampOffset(
-                        for: scrollView,
-                        desiredContentOffset: desiredContentOffset
-                    )
-                }
+                self.updateInsetsAndClampOffset(desiredContentOffset: desiredContentOffset)
             }
         }
+    }
 
-        private func resetToOrigin(for scrollView: UIScrollView) {
-            wrapperView.setNeedsLayout()
-            wrapperView.layoutIfNeeded()
-            hostingController.view.setNeedsLayout()
-            hostingController.view.layoutIfNeeded()
-            scrollView.layoutIfNeeded()
-            scrollView.contentInset = .zero
-            scrollView.setZoomScale(1, animated: false)
-            scrollView.contentOffset = .zero
-            updateInsetsAndClampOffset(for: scrollView, desiredContentOffset: .zero)
+    private func resetToOrigin() {
+        wrapperView.setNeedsLayout()
+        wrapperView.layoutIfNeeded()
+        hostingController.view.setNeedsLayout()
+        hostingController.view.layoutIfNeeded()
+        layoutIfNeeded()
+        contentInset = .zero
+        setZoomScale(1, animated: false)
+        contentOffset = .zero
+        updateInsetsAndClampOffset(desiredContentOffset: .zero)
+    }
+
+    func updateInsetsAndClampOffset(
+        desiredContentOffset: CGPoint? = nil
+    ) {
+        contentInset = .zero
+
+        if let desiredContentOffset {
+            clampOffset(proposedOffset: desiredContentOffset)
+        } else {
+            clampOffset()
         }
+    }
 
-        func updateInsetsAndClampOffset(
-            for scrollView: UIScrollView,
-            desiredContentOffset: CGPoint? = nil
-        ) {
-            scrollView.contentInset = .zero
+    private func clampOffset() {
+        clampOffset(proposedOffset: contentOffset)
+    }
 
-            if let desiredContentOffset {
-                clampOffset(for: scrollView, proposedOffset: desiredContentOffset)
-            } else {
-                clampOffset(for: scrollView)
-            }
+    private func clampOffset(proposedOffset: CGPoint) {
+        let minOffsetX = -contentInset.left
+        let maxOffsetX = max(
+            contentSize.width - bounds.width + contentInset.right,
+            minOffsetX
+        )
+        let minOffsetY = -contentInset.top
+        let maxOffsetY = max(
+            contentSize.height - bounds.height + contentInset.bottom,
+            minOffsetY
+        )
+
+        let clampedOffset = CGPoint(
+            x: min(max(proposedOffset.x, minOffsetX), maxOffsetX),
+            y: min(max(proposedOffset.y, minOffsetY), maxOffsetY)
+        )
+
+        if contentOffset != clampedOffset {
+            contentOffset = clampedOffset
         }
+    }
+}
 
-        private func clampOffset(for scrollView: UIScrollView) {
-            clampOffset(for: scrollView, proposedOffset: scrollView.contentOffset)
-        }
+private struct ZoomableScheduleScrollView<Content: View>: UIViewRepresentable {
+    let minZoomScale: CGFloat
+    let maxZoomScale: CGFloat
+    let resetToken: UUID
+    let content: Content
 
-        private func clampOffset(for scrollView: UIScrollView, proposedOffset: CGPoint) {
-            let minOffsetX = -scrollView.contentInset.left
-            let maxOffsetX = max(
-                scrollView.contentSize.width - scrollView.bounds.width + scrollView.contentInset.right,
-                minOffsetX
-            )
-            let minOffsetY = -scrollView.contentInset.top
-            let maxOffsetY = max(
-                scrollView.contentSize.height - scrollView.bounds.height + scrollView.contentInset.bottom,
-                minOffsetY
-            )
+    init(
+        minZoomScale: CGFloat,
+        maxZoomScale: CGFloat,
+        resetToken: UUID,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.minZoomScale = minZoomScale
+        self.maxZoomScale = maxZoomScale
+        self.resetToken = resetToken
+        self.content = content()
+    }
 
-            let clampedOffset = CGPoint(
-                x: min(max(proposedOffset.x, minOffsetX), maxOffsetX),
-                y: min(max(proposedOffset.y, minOffsetY), maxOffsetY)
-            )
+    func makeUIView(context: Context) -> ZoomHostingScrollView {
+        let scrollView = ZoomHostingScrollView()
+        scrollView.applyConfiguration(
+            content: AnyView(content),
+            minZoomScale: minZoomScale,
+            maxZoomScale: maxZoomScale,
+            resetToken: resetToken
+        )
+        return scrollView
+    }
 
-            if scrollView.contentOffset != clampedOffset {
-                scrollView.contentOffset = clampedOffset
-            }
-        }
+    func updateUIView(_ scrollView: ZoomHostingScrollView, context: Context) {
+        scrollView.applyConfiguration(
+            content: AnyView(content),
+            minZoomScale: minZoomScale,
+            maxZoomScale: maxZoomScale,
+            resetToken: resetToken
+        )
     }
 }
 
