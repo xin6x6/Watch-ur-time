@@ -829,6 +829,12 @@ struct AddTimeTable: View {
     }
 
     private func saveTimetable() {
+        focusedTimeField = nil
+
+        guard validateScheduleBeforeSave() else {
+            return
+        }
+
         let subjects = completedSubjects
         let slots = completedTimeSlots.map {
             TimetableTimeSlot(
@@ -882,6 +888,39 @@ struct AddTimeTable: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func validateScheduleBeforeSave() -> Bool {
+        if let invalidField = firstInvalidTimeField() {
+            invalidTimeField = invalidField
+            return false
+        }
+
+        guard !completedTimeSlots.isEmpty else {
+            return false
+        }
+
+        guard timeSlotDrafts.allSatisfy({ $0.isBlank || $0.isComplete }) else {
+            return false
+        }
+
+        return true
+    }
+
+    private func firstInvalidTimeField() -> TimeFieldFocus? {
+        for slot in timeSlotDrafts {
+            let startText = slot.startTime.trimmed
+            if !startText.isEmpty, !TimeSlotDraft.isValidTimeFormat(startText) {
+                return TimeFieldFocus(slotID: slot.id, kind: .start)
+            }
+
+            let endText = slot.endTime.trimmed
+            if !endText.isEmpty, !TimeSlotDraft.isValidTimeFormat(endText) {
+                return TimeFieldFocus(slotID: slot.id, kind: .end)
+            }
+        }
+
+        return nil
     }
 
     private func activeStore() -> TimetableStore {
