@@ -17,6 +17,13 @@
 "Uniform Notify Time" = "Uniform Notify Time";
 "Do Something" = "Do Something";
 "Export Timetable" = "Export Timetable";
+"Save" = "Save";
+"New Timetable" = "New Timetable";
+"Create a new empty timetable?" = "Create a new empty timetable?";
+"This clears the current timetable, notifications, and assignments." = "This clears the current timetable, notifications, and assignments.";
+"Saved timetable successfully." = "Saved timetable successfully.";
+"Created a new empty timetable." = "Created a new empty timetable.";
+"Save failed: %@" = "Save failed: %@";
 "Import Timetable" = "Import Timetable";
 "Watch ur Time :: Time++" = "Watch ur Time :: Time++";
 "Timetable OCR Import" = "Timetable OCR Import";

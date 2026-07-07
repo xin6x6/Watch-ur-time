@@ -11,6 +11,13 @@
 "Uniform Notify Time" = "制服通知时间";
 "Do Something" = "做某些事情";
 "Export Timetable" = "出口时间桌子";
+"Save" = "保存";
+"New Timetable" = "新建课程表";
+"Create a new empty timetable?" = "要创建一个全新的空课程表吗？";
+"This clears the current timetable, notifications, and assignments." = "这会清空当前课程表、通知设置和所有作业。";
+"Saved timetable successfully." = "课程表已保存成功。";
+"Created a new empty timetable." = "已创建新的空课程表。";
+"Save failed: %@" = "保存失败：%@";
 "Import Timetable" = "进口时间桌子";
 "Watch ur Time :: Time++" = "Watch ur Time :: Time++";
 "Font" = "字体";

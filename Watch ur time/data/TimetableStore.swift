@@ -402,6 +402,7 @@ final class TimetableStore {
     var notificationMomentModeRawValue: Int = NotificationMomentMode.custom.rawValue
     var uniformNotificationMinutesBefore: Int = 2
     var uniformNotificationMomentRawValue: Int = NotificationMoment.classEnds.rawValue
+    var exportBookmarkPayload: Data?
     private var subjectsPayload: Data = Data()
     private var slotsPayload: Data = Data()
     private var placementsPayload: Data = Data()

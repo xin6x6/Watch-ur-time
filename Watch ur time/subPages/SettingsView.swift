@@ -16,6 +16,11 @@ enum Themes: String, CaseIterable {
     case System = "System"
 }
 
+private enum TimetableTransferAction {
+    case export
+    case save
+}
+
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var classReminderScheduler: ClassReminderScheduler
@@ -35,9 +40,11 @@ struct SettingsView: View {
     @State private var transferDocument = TimetableTransferDocument()
     @State private var transferFilename = "Timetable"
     @State private var transferMessage: String?
+    @State private var pendingTransferAction: TimetableTransferAction = .export
     @State private var debugUnlockInput = ""
     @State private var uniformNotificationAdvanceTime = 2
     @State private var uniformNotificationMoment = NotificationMoment.classEnds
+    @State private var isShowingNewTimetableConfirmation = false
 
     private let uniformAdvanceOptions = Array(0...60)
 
@@ -58,6 +65,14 @@ struct SettingsView: View {
 
                 Button("Import Timetable") {
                     isImporting = true
+                }
+
+                Button("New Timetable", role: .destructive) {
+                    isShowingNewTimetableConfirmation = true
+                }
+
+                Button("Save") {
+                    saveCurrentTimetable()
                 }
             }
 
@@ -228,6 +243,18 @@ struct SettingsView: View {
         ) { result in
             handleImport(result)
         }
+        .confirmationDialog(
+            "Create a new empty timetable?",
+            isPresented: $isShowingNewTimetableConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("New Timetable", role: .destructive) {
+                createNewTimetable()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This clears the current timetable, notifications, and assignments.")
+        }
         .alert("Timetable Transfer", isPresented: transferMessageBinding) {
             Button("OK", role: .cancel) {
                 transferMessage = nil
@@ -269,22 +296,29 @@ struct SettingsView: View {
     }
 
     private func prepareExport() {
-        let archive = TimetableArchive(store: stores.first?.snapshot ?? .empty)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-        let data = (try? encoder.encode(archive)) ?? Data()
-        transferDocument = TimetableTransferDocument(data: data)
+        pendingTransferAction = .export
+        transferDocument = TimetableTransferDocument(data: makeArchiveData())
         transferFilename = "Timetable-\(exportDateStamp).ttb"
         isExporting = true
     }
 
     private func handleExport(_ result: Result<URL, Error>) {
         switch result {
-        case .success:
-            transferMessage = AppLocalizer.localized("Exported timetable successfully.")
+        case .success(let url):
+            persistExportLocation(url)
+            switch pendingTransferAction {
+            case .export:
+                transferMessage = AppLocalizer.localized("Exported timetable successfully.")
+            case .save:
+                transferMessage = AppLocalizer.localized("Saved timetable successfully.")
+            }
         case .failure(let error):
-            transferMessage = AppLocalizer.format("Export failed: %@", error.localizedDescription)
+            switch pendingTransferAction {
+            case .export:
+                transferMessage = AppLocalizer.format("Export failed: %@", error.localizedDescription)
+            case .save:
+                transferMessage = AppLocalizer.format("Save failed: %@", error.localizedDescription)
+            }
         }
     }
 
@@ -303,7 +337,8 @@ struct SettingsView: View {
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 let archive = try decoder.decode(TimetableArchive.self, from: data)
-                try importArchive(archive)
+                let importedStore = try importArchive(archive)
+                persistExportLocation(url, for: importedStore)
                 transferMessage = AppLocalizer.localized("Imported timetable successfully.")
             } catch {
                 transferMessage = AppLocalizer.format("Import failed: %@", error.localizedDescription)
@@ -313,7 +348,8 @@ struct SettingsView: View {
         }
     }
 
-    private func importArchive(_ archive: TimetableArchive) throws {
+    @discardableResult
+    private func importArchive(_ archive: TimetableArchive) throws -> TimetableStore {
         let targetStore = stores.first ?? TimetableStore()
 
         if stores.isEmpty {
@@ -332,6 +368,122 @@ struct SettingsView: View {
         Task {
             await classReminderScheduler.sync(with: targetStore.snapshot)
         }
+        return targetStore
+    }
+
+    private func saveCurrentTimetable() {
+        guard let store = currentStoreForMutation() else {
+            return
+        }
+
+        if let destinationURL = resolvedExportURL(for: store) {
+            do {
+                let didAccess = destinationURL.startAccessingSecurityScopedResource()
+                defer {
+                    if didAccess {
+                        destinationURL.stopAccessingSecurityScopedResource()
+                    }
+                }
+                try makeArchiveData().write(to: destinationURL, options: .atomic)
+                persistExportLocation(destinationURL, for: store)
+                transferMessage = AppLocalizer.localized("Saved timetable successfully.")
+            } catch {
+                pendingTransferAction = .save
+                transferDocument = TimetableTransferDocument(data: makeArchiveData())
+                transferFilename = destinationURL.deletingPathExtension().lastPathComponent
+                isExporting = true
+            }
+        } else {
+            pendingTransferAction = .save
+            transferDocument = TimetableTransferDocument(data: makeArchiveData())
+            transferFilename = "Timetable-\(exportDateStamp).ttb"
+            isExporting = true
+        }
+    }
+
+    private func createNewTimetable() {
+        let targetStore = currentStoreForMutation() ?? TimetableStore()
+
+        if stores.isEmpty {
+            modelContext.insert(targetStore)
+        }
+
+        targetStore.apply(snapshot: .empty)
+        targetStore.updatedAt = .now
+        targetStore.exportBookmarkPayload = nil
+        NotificationDeliveryMode.both.persistToDefaults()
+
+        for duplicate in stores.dropFirst() {
+            modelContext.delete(duplicate)
+        }
+
+        do {
+            try modelContext.save()
+            watchSyncManager.pushLatestSnapshotIfPossible()
+            Task {
+                await classReminderScheduler.sync(with: targetStore.snapshot)
+            }
+            transferMessage = AppLocalizer.localized("Created a new empty timetable.")
+        } catch {
+            transferMessage = AppLocalizer.format("Unable to save timetable: %@", error.localizedDescription)
+        }
+    }
+
+    private func currentStoreForMutation() -> TimetableStore? {
+        if let store = stores.first {
+            return store
+        }
+
+        let newStore = TimetableStore()
+        modelContext.insert(newStore)
+        return newStore
+    }
+
+    private func makeArchiveData() -> Data {
+        let archive = TimetableArchive(store: stores.first?.snapshot ?? .empty)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return (try? encoder.encode(archive)) ?? Data()
+    }
+
+    private func persistExportLocation(_ url: URL, for store: TimetableStore? = nil) {
+        guard let store = store ?? stores.first else {
+            return
+        }
+
+        do {
+            store.exportBookmarkPayload = try url.bookmarkData(
+                options: [.minimalBookmark],
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+            try modelContext.save()
+        } catch {
+            transferMessage = AppLocalizer.format("Save failed: %@", error.localizedDescription)
+        }
+    }
+
+    private func resolvedExportURL(for store: TimetableStore) -> URL? {
+        guard let bookmarkData = store.exportBookmarkPayload else {
+            return nil
+        }
+
+        var isStale = false
+        guard let url = try? URL(
+            resolvingBookmarkData: bookmarkData,
+            options: [.withoutUI, .withoutMounting],
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        ) else {
+            return nil
+        }
+
+        if isStale {
+            persistExportLocation(url, for: store)
+        }
+
+        return url
     }
 
     private var exportDateStamp: String {
