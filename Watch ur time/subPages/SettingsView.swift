@@ -51,7 +51,10 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Appearance") {
-                Picker("Appearance", selection: $themes) {
+                Picker(
+                    selection: $themes,
+                    label: settingsLabel("Appearance", systemImage: "circle.lefthalf.filled")
+                ) {
                     Text("I Don't Care Just Follow System").tag(Themes.System)
                     Text("Lights On!").tag(Themes.Light)
                     Text("Lights Off!").tag(Themes.Dark)
@@ -59,27 +62,40 @@ struct SettingsView: View {
             }
 
             Section("Do Something") {
-                Button("Export Timetable") {
+                Button {
                     prepareExport()
+                } label: {
+                    settingsLabel("Export Timetable", systemImage: "square.and.arrow.up")
                 }
 
-                Button("Import Timetable") {
+                Button {
                     isImporting = true
+                } label: {
+                    settingsLabel("Import Timetable", systemImage: "square.and.arrow.down")
                 }
 
-                Button("New Timetable", role: .destructive) {
+                Button(role: .destructive) {
                     isShowingNewTimetableConfirmation = true
+                } label: {
+                    settingsLabel("New Timetable", systemImage: "plus.rectangle.on.folder")
                 }
 
-                Button("Save") {
+                Button {
                     saveCurrentTimetable()
+                } label: {
+                    settingsLabel("Save", systemImage: "externaldrive.badge.checkmark")
                 }
             }
 
             Section("Haptics and Sound") {
-                Toggle("Haptic Feedback", isOn: $isGlobalHapticsEnabled)
+                Toggle(isOn: $isGlobalHapticsEnabled) {
+                    settingsLabel("Haptic Feedback", systemImage: "waveform.path")
+                }
 
-                Picker("Haptic Strength", selection: $globalHapticStrength) {
+                Picker(
+                    selection: $globalHapticStrength,
+                    label: settingsLabel("Haptic Strength", systemImage: "dot.radiowaves.left.and.right")
+                ) {
                     ForEach(AppHapticStrength.allCases) { strength in
                         Text(strength.title).tag(strength)
                     }
@@ -89,21 +105,30 @@ struct SettingsView: View {
             }
 
             Section("Notification") {
-                Picker("Notify By", selection: notificationDeliveryModeBinding) {
+                Picker(
+                    selection: notificationDeliveryModeBinding,
+                    label: settingsLabel("Notify By", systemImage: "bell.badge")
+                ) {
                     ForEach(NotificationDeliveryMode.allCases) { mode in
                         Text(mode.title).tag(mode)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Picker("Notify Moment Using", selection: notificationMomentModeBinding) {
+                Picker(
+                    selection: notificationMomentModeBinding,
+                    label: settingsLabel("Notify Moment Using", systemImage: "clock.badge")
+                ) {
                     ForEach(NotificationMomentMode.allCases) { mode in
                         Text(mode.title).tag(mode)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Picker("Notify Time Using", selection: notificationTimeModeBinding) {
+                Picker(
+                    selection: notificationTimeModeBinding,
+                    label: settingsLabel("Notify Time Using", systemImage: "timer")
+                ) {
                     ForEach(NotificationTimeMode.allCases) { mode in
                         Text(mode.title).tag(mode)
                     }
@@ -111,7 +136,10 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
 
                 if effectiveNotificationMomentMode == .uniform {
-                    Picker("Uniform Notify Moment", selection: uniformNotificationMomentBinding) {
+                    Picker(
+                        selection: uniformNotificationMomentBinding,
+                        label: settingsLabel("Uniform Notify Moment", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                    ) {
                         ForEach(NotificationMoment.allCases) { moment in
                             Text(moment.title).tag(moment)
                         }
@@ -120,7 +148,10 @@ struct SettingsView: View {
                 }
 
                 if effectiveNotificationTimeMode == .uniform {
-                    Picker("Uniform Notify Time", selection: uniformNotificationAdvanceTimeBinding) {
+                    Picker(
+                        selection: uniformNotificationAdvanceTimeBinding,
+                        label: settingsLabel("Uniform Notify Time", systemImage: "hourglass")
+                    ) {
                         ForEach(uniformAdvanceOptions, id: \.self) { minute in
                             Text(minute == 0 ? "On time" : "\(minute) mins")
                                 .tag(minute)
@@ -132,7 +163,10 @@ struct SettingsView: View {
             }
 
             Section("Watch ur Time :: Time++") {
-                Picker("Font", selection: $appFontOption) {
+                Picker(
+                    selection: $appFontOption,
+                    label: settingsLabel("Font", systemImage: "textformat")
+                ) {
                     ForEach(AppFontOption.allCases) { option in
                         Text(option.title).tag(option)
                     }
@@ -145,83 +179,109 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Picker("Language", selection: $appLanguage) {
+                Picker(
+                    selection: $appLanguage,
+                    label: settingsLabel("Language", systemImage: "globe")
+                ) {
                     ForEach(AppLanguage.allCases) { option in
                         Text(option.title).tag(option)
                     }
                 }
                 .pickerStyle(.menu)
 
-                Toggle("Timetable OCR Import", isOn: timetableOCRBinding)
+                Toggle(isOn: timetableOCRBinding) {
+                    settingsLabel("Timetable OCR Import", systemImage: "text.viewfinder")
+                }
                     .disabled(!isRestrictionsDisabled)
             }
 
             if isDebugUnlocked {
                 Section("Debug") {
                     HStack {
-                        Text("Alarm Permission")
+                        labelText("Alarm Permission", systemImage: "alarm")
                         Spacer()
                         Text(classReminderScheduler.alarmAuthorizationDebugText())
                             .foregroundStyle(.secondary)
                     }
 
-                    Button("Clear Test Alarm", role: .destructive) {
+                    Button(role: .destructive) {
                         Task {
                             let phoneResult = await classReminderScheduler.clearDebugAlarm()
                             watchSyncManager.clearWatchTestReminder()
                             transferMessage = "\(phoneResult)\n\(AppLocalizer.localized("Watch test reminder clear requested."))"
                         }
+                    } label: {
+                        settingsLabel("Clear Test Alarm", systemImage: "alarm.waves.left.and.right")
                     }
 
-                    Toggle("Disable all restrictions", isOn: $isRestrictionsDisabled)
+                    Toggle(isOn: $isRestrictionsDisabled) {
+                        settingsLabel("Disable all restrictions", systemImage: "lock.open")
+                    }
 
-                    Button("Open App Settings") {
+                    Button {
                         classReminderScheduler.openAppSettings()
+                    } label: {
+                        settingsLabel("Open App Settings", systemImage: "gearshape")
                     }
 
-                    Button("Request Alarm Permission") {
+                    Button {
                         Task {
                             transferMessage = await classReminderScheduler.requestAlarmAuthorizationDebug()
                         }
+                    } label: {
+                        settingsLabel("Request Alarm Permission", systemImage: "checkmark.shield")
                     }
 
-                    Button("Schedule Test Alarm In 1 Min") {
+                    Button {
                         Task {
                             let phoneResult = await classReminderScheduler.scheduleDebugAlarm()
                             watchSyncManager.scheduleWatchTestReminder()
                             transferMessage = "\(phoneResult)\n\(AppLocalizer.localized("Watch test reminder requested."))"
                         }
+                    } label: {
+                        settingsLabel("Schedule Test Alarm In 1 Min", systemImage: "plus.badge.clock")
                     }
 
-                    Button("Show Alarm Auth Status") {
+                    Button {
                         transferMessage = classReminderScheduler.dumpAlarmAuthorizationDebug()
+                    } label: {
+                        settingsLabel("Show Alarm Auth Status", systemImage: "info.circle")
                     }
 
-                    Button("Show Alarm Runtime Details") {
+                    Button {
                         transferMessage = classReminderScheduler.alarmRuntimeDiagnosticReport()
+                    } label: {
+                        settingsLabel("Show Alarm Runtime Details", systemImage: "waveform.badge.magnifyingglass")
                     }
                 }
             } else {
                 Section("Who Are You!") {
-                    TextField("Say something", text: $debugUnlockInput)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.text.rectangle")
+                            .frame(width: 18)
+                            .foregroundStyle(.secondary)
+                        TextField("Say something", text: $debugUnlockInput)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
 
-                    Button("Submit") {
+                    Button {
                         unlockDebugIfNeeded()
+                    } label: {
+                        settingsLabel("Submit", systemImage: "paperplane")
                     }
                 }
             }
 
             Section("About") {
                 HStack {
-                    Text("App Name")
+                    labelText("App Name", systemImage: "app.badge")
                     Spacer()
                     Text("Watch Ur Time")
                         .foregroundStyle(.secondary)
                 }
                 HStack {
-                    Text("Version")
+                    labelText("Version", systemImage: "number")
                     Spacer()
                     Text("Dev 0.67")
                         .foregroundStyle(.secondary)
@@ -626,6 +686,27 @@ struct SettingsView: View {
 
         isDebugUnlocked = true
         debugUnlockInput = ""
+    }
+
+    @ViewBuilder
+    private func settingsLabel(_ title: String, systemImage: String) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: systemImage)
+                .frame(width: 18)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func labelText(_ title: String, systemImage: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .frame(width: 18)
+                .foregroundStyle(.secondary)
+            Text(title)
+        }
     }
 }
 
