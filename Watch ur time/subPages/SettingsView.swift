@@ -283,7 +283,7 @@ struct SettingsView: View {
                 HStack {
                     labelText("Version", systemImage: "number")
                     Spacer()
-                    Text("Dev 0.67")
+                    Text(appVersionDisplayText)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -686,6 +686,22 @@ struct SettingsView: View {
 
         isDebugUnlocked = true
         debugUnlockInput = ""
+    }
+
+    private var appVersionDisplayText: String {
+        let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+
+        switch (shortVersion, buildVersion) {
+        case let (short?, build?) where !short.isEmpty && !build.isEmpty:
+            return "\(short) (\(build))"
+        case let (short?, _) where !short.isEmpty:
+            return short
+        case let (_, build?) where !build.isEmpty:
+            return build
+        default:
+            return "Unknown"
+        }
     }
 
     @ViewBuilder
